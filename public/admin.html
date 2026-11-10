@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GlassDock admin</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/style.css">
+<style>
+  main { padding: 40px 0 80px; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 24px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 28px; }
+  .kpi { padding: 18px; border-radius: 18px; background: rgba(255,255,255,.05); box-shadow: inset 0 0 0 1px var(--line); }
+  .kpi span { color: var(--ink2); font-size: 14px; }
+  .kpi b { display: block; font: 700 26px var(--display); margin-top: 6px; }
+  h2 { font-size: 24px; margin: 34px 0 6px; }
+  .sub { color: var(--ink2); font-size: 14.5px; margin-bottom: 14px; }
+  .tbl { overflow-x: auto; border-radius: 16px; box-shadow: inset 0 0 0 1px var(--line); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { color: var(--ink2); font-weight: 500; }
+  tr:last-child td { border-bottom: 0; }
+  .due { display: grid; gap: 10px; }
+  .pay { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; padding: 16px 18px; border-radius: 18px; background: rgba(48,209,88,.07); box-shadow: inset 0 0 0 1px rgba(48,209,88,.3); }
+  .pay .who { min-width: 180px; }
+  .pay .who b { display: block; font-size: 16px; }
+  .pay .who span { color: var(--ink2); font-size: 13.5px; }
+  .pay .key { font-family: ui-monospace, Consolas, monospace; font-size: 14px; padding: 8px 12px; border-radius: 10px; background: rgba(255,255,255,.07); cursor: pointer; }
+  .pay .amt { font: 700 24px var(--display); margin-left: auto; }
+  .empty { padding: 22px; border-radius: 16px; color: var(--ink2); box-shadow: inset 0 0 0 1px var(--line); }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="row">
+    <h1 style="font-size:34px;margin-right:auto">GlassDock admin</h1>
+    <input class="input" id="key" type="password" placeholder="ADMIN_KEY" style="width:260px">
+    <button class="btn btn-primary btn-sm" id="load">Entrar</button>
+  </div>
+  <div class="kpis" id="kpis"></div>
+
+  <h2>PIX desta semana</h2>
+  <p class="sub">Comissões que completaram 7 dias sem reembolso. Mande o PIX pelo app do banco ou do Mercado Pago e clique em Paguei</p>
+  <div class="due" id="due"></div>
+
+  <h2>Pedidos</h2><div class="tbl"><table id="orders"></table></div>
+  <h2>Indicadores</h2><div class="tbl"><table id="refs"></table></div>
+  <h2>PIX enviados</h2><div class="tbl"><table id="payouts"></table></div>
+</main>
+<script src="/site.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+try { $('key').value = sessionStorage.getItem('gd_admin') || ''; } catch {}
+const k = () => encodeURIComponent($('key').value);
+const dt = (t) => t ? new Date(t).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '';
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const table = (cols, rows) => `<tr>${cols.map((c) => `<th>${c[0]}</th>`).join('')}</tr>` + (rows || []).map((r) => `<tr>${cols.map((c) => `<td>${c[1](r)}</td>`).join('')}</tr>`).join('');
+const PIX = { CPF: 'CPF', CNPJ: 'CNPJ', PHONE: 'Celular', EMAIL: 'E-mail', RANDOM: 'Aleatória' };
+
+async function load() {
+  try { sessionStorage.setItem('gd_admin', $('key').value); } catch {}
+  const r = await fetch('/api/admin?k=' + k());
+  if (!r.ok) return toast('Chave errada');
+  const d = await r.json();
+  const s = d.stats || {};
+  $('kpis').innerHTML = [
+    ['Vendas', s.paid], ['Faturamento', brl(s.revenue || 0)], ['Vendas indicadas', s.referred], ['Reembolsos', s.refunded],
+    ['Comissão a pagar', brl(s.owed || 0)], ['Comissão paga', brl(s.paidOut || 0)],
+  ].map(([a, b]) => `<div class="kpi"><span>${a}</span><b>${b ?? 0}</b></div>`).join('');
+
+  $('due').innerHTML = d.due.length ? d.due.map((x) => `
+    <div class="pay">
+      <div class="who"><b>${esc(x.name)}</b><span>/${esc(x.slug)} · ${x.sales} ${x.sales > 1 ? 'vendas' : 'venda'}</span></div>
+      <span class="muted">${PIX[x.pix_type] || x.pix_type}</span>
+      <span class="key" data-copy="${esc(x.pix_key)}" title="Copiar chave">${esc(x.pix_key)}</span>
+      <span class="amt">${brl(x.amount)}</span>
+      <button class="btn btn-sm btn-glass" data-copy="${(x.amount / 100).toFixed(2).replace('.', ',')}">Copiar valor</button>
+      <button class="btn btn-sm btn-primary" data-paid="${esc(x.slug)}" data-name="${esc(x.name)}" data-amount="${x.amount}">Paguei</button>
+    </div>`).join('') : '<div class="empty">Nada para pagar agora</div>';
+
+  $('orders').innerHTML = table([
+    ['Pedido', (x) => esc(x.id)], ['Status', (x) => x.status], ['Valor', (x) => brl(x.amount)], ['Indicador', (x) => esc(x.ref || '')], ['E-mail', (x) => esc(x.email || '')],
+    ['Criado', (x) => dt(x.created_at)], ['Pago', (x) => dt(x.paid_at)], ['Downloads', (x) => x.downloads],
+  ], d.orders);
+  $('refs').innerHTML = table([
+    ['Link', (x) => `<b>/${esc(x.slug)}</b>`], ['Nome', (x) => esc(x.name)], ['E-mail', (x) => esc(x.email)], ['Visitas', (x) => x.clicks], ['Desde', (x) => dt(x.created_at)],
+  ], d.referrers);
+  $('payouts').innerHTML = table([
+    ['Data', (x) => dt(x.created_at)], ['Indicador', (x) => esc(x.slug)], ['Valor', (x) => brl(x.amount)], ['Chave', (x) => `${PIX[x.pix_type] || ''} ${esc(x.pix_key)}`], ['Nota', (x) => esc(x.note || '')],
+  ], d.payouts);
+}
+
+document.addEventListener('click', async (e) => {
+  const c = e.target.closest('[data-copy]');
+  if (c) return copyText(c.dataset.copy, 'Copiado');
+  const b = e.target.closest('[data-paid]');
+  if (!b) return;
+  if (!confirm(`Confirma que mandou ${brl(+b.dataset.amount)} para ${b.dataset.name}?`)) return;
+  b.disabled = true;
+  const r = await fetch('/api/admin/paguei?k=' + k(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: b.dataset.paid }) });
+  const d = await r.json();
+  toast(r.ok ? 'Registrado' : d.error || 'Falhou', 3000);
+  load();
+});
+$('load').onclick = load;
+$('key').addEventListener('keydown', (e) => { if (e.key === 'Enter') load(); });
+if ($('key').value) load();
+</script>
+</body>
+</html>

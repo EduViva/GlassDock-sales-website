@@ -1,0 +1,20 @@
+name = "glassdock"
+main = "src/worker.js"
+compatibility_date = "2026-10-01"
+
+# Páginas estáticas (public/). O worker roda antes delas para tratar /api, /baixar e os links de indicação
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = true
+html_handling = "drop-trailing-slash"
+
+[vars]
+SUPABASE_URL = "https://hzqpfxpvsaezixlxtkab.supabase.co"
+PRICE_CENTS = "890"
+COMMISSION_PERCENT = "50"
+# dias de espera antes de a comissão entrar na fila da segunda-feira (prazo de arrependimento)
+HOLD_DAYS = "7"
+# nome do arquivo no bucket "releases" do Supabase
+EXE_KEY = "GlassDock.exe"
+# Segredos (npx wrangler secret put …): SUPABASE_SECRET_KEY, MP_ACCESS_TOKEN, MP_WEBHOOK_SECRET, ADMIN_KEY

@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Indique o GlassDock e ganhe 50%</title>
+<meta name="description" content="Crie o seu link e ganhe R$ 4,45 no PIX por cada venda do GlassDock. Sem limite e sem precisar ter comprado">
+<meta property="og:title" content="Indique o GlassDock e fique com metade de cada venda">
+<meta property="og:description" content="R$ 4,45 no seu PIX por venda, sem limite">
+<meta name="theme-color" content="#07070b">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+<style>
+  body::before {
+    content: ""; position: absolute; top: -200px; left: 0; right: 0; height: 1000px; z-index: -1; pointer-events: none;
+    background: radial-gradient(40% 40% at 20% 30%, rgba(48, 209, 88, .16), transparent 70%), radial-gradient(45% 45% at 80% 20%, rgba(94, 59, 238, .3), transparent 70%), radial-gradient(40% 40% at 60% 60%, rgba(90, 184, 255, .14), transparent 70%);
+  }
+  .top { padding: clamp(120px, 15vw, 160px) 0 clamp(60px, 9vw, 110px); }
+  .top .wrap { display: grid; grid-template-columns: 1.05fr 1fr; gap: clamp(30px, 5vw, 70px); align-items: center; }
+  .top h1 { font-size: clamp(42px, 6.2vw, 80px); }
+  .top .lead { margin-top: 22px; max-width: 34ch; }
+  .money { font: 800 clamp(64px, 9vw, 116px)/.9 var(--display); letter-spacing: -.05em; margin-top: 34px; display: flex; align-items: flex-start; gap: 8px; }
+  .money small { font-size: .3em; letter-spacing: 0; font-weight: 600; margin-top: .5em; color: var(--ink2); }
+  .money + p { color: var(--ink2); margin-top: 10px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 30px; }
+  .chips span { padding: 8px 14px; border-radius: 999px; background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 1px var(--line); font-size: 14.5px; color: var(--ink2); }
+  .chips b { color: var(--ink); font-weight: 600; }
+  @media (max-width: 900px) { .top .wrap { grid-template-columns: 1fr; } }
+
+  .form-card { padding: clamp(22px, 3vw, 32px); display: grid; gap: 16px; }
+  .form-card h2 { font-size: 26px; letter-spacing: -.02em; }
+  .two { display: grid; grid-template-columns: 150px 1fr; gap: 10px; }
+  @media (max-width: 460px) { .two { grid-template-columns: 1fr; } }
+  .slug { display: flex; align-items: center; height: 48px; border-radius: 12px; background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 1px var(--line); padding-left: 14px; transition: box-shadow .2s; }
+  .slug:focus-within { box-shadow: inset 0 0 0 1.5px var(--accent), 0 0 0 4px rgba(10,132,255,.18); }
+  .slug span { color: var(--ink3); white-space: nowrap; }
+  .slug input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; padding: 0 12px 0 1px; font-weight: 600; }
+  .hint { font-size: 13.5px; color: var(--ink3); min-height: 20px; }
+  .hint.ok { color: var(--green); }
+  .hint.bad { color: var(--orange); }
+  .err { color: #ff8a80; font-size: 14.5px; min-height: 0; }
+  .form-card .btn { width: 100%; }
+  .fine { font-size: 13.5px; color: var(--ink3); text-align: center; }
+
+  .done { display: none; gap: 18px; }
+  .linkbox { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 16px; border-radius: 16px; background: rgba(10,132,255,.12); box-shadow: inset 0 0 0 1px rgba(10,132,255,.45); }
+  .linkbox b { font: 650 clamp(18px, 2.4vw, 22px)/1.2 var(--display); letter-spacing: -.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+  .share { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .share a, .share button { height: 64px; border-radius: 14px; border: 0; cursor: pointer; text-decoration: none; display: grid; place-items: center; align-content: center; gap: 4px; font-size: 12.5px; color: var(--ink2); background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 1px var(--line); transition: background .2s; }
+  .share a:hover, .share button:hover { background: rgba(255,255,255,.11); color: var(--ink); }
+  .share svg { width: 22px; height: 22px; }
+
+  /* painel */
+  .panel-sec { display: none; padding: clamp(110px, 14vw, 140px) 0 10px; }
+  body.has-key .panel-sec { display: block; }
+  body.has-key .top { padding-top: 40px; }
+  .ph { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 18px; margin-bottom: 22px; }
+  .ph h1 { font-size: clamp(36px, 5vw, 56px); }
+  .kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .kpi { padding: 20px; border-radius: 20px; background: rgba(255,255,255,.045); box-shadow: inset 0 0 0 1px var(--line); }
+  .kpi span { font-size: 14px; color: var(--ink2); }
+  .kpi b { display: block; font: 700 clamp(26px, 3vw, 36px)/1.1 var(--display); letter-spacing: -.03em; margin-top: 8px; font-variant-numeric: tabular-nums; }
+  .kpi.hl { background: linear-gradient(160deg, rgba(48,209,88,.22), rgba(48,209,88,.06)); box-shadow: inset 0 0 0 1px rgba(48,209,88,.4); }
+  @media (max-width: 900px) { .kpis { grid-template-columns: repeat(2, 1fr); } .kpi.hl { grid-column: span 2; } }
+  .sales { margin-top: 14px; padding: 8px 20px; }
+  .sales table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .sales td { padding: 13px 0; border-bottom: 1px solid var(--line); }
+  .sales tr:last-child td { border-bottom: 0; }
+  .sales td:last-child { text-align: right; }
+  .st { font-size: 12.5px; padding: 3px 9px; border-radius: 99px; background: rgba(255,255,255,.08); color: var(--ink2); margin-left: 8px; }
+  .st.pago { background: rgba(48,209,88,.16); color: #7ee49a; }
+  .st.hoje { background: rgba(10,132,255,.18); color: #8cc4ff; }
+  .empty { padding: 26px 0; text-align: center; color: var(--ink2); }
+
+  /* calculadora */
+  .calc { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: stretch; }
+  .calc .card { padding: clamp(24px, 4vw, 40px); }
+  .calc .result { display: grid; align-content: center; text-align: center; background: radial-gradient(80% 80% at 50% 0%, rgba(48,209,88,.25), transparent 70%), rgba(22,22,26,.84); }
+  .calc .result b { font: 800 clamp(56px, 8vw, 96px)/1 var(--display); letter-spacing: -.05em; font-variant-numeric: tabular-nums; }
+  .calc .result span { color: var(--ink2); margin-top: 10px; }
+  .calc .people { font: 700 clamp(40px, 5vw, 56px)/1 var(--display); letter-spacing: -.04em; margin: 8px 0 22px; }
+  .presets { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+  .presets button { padding: 8px 13px; border-radius: 999px; border: 0; cursor: pointer; background: rgba(255,255,255,.07); box-shadow: inset 0 0 0 1px var(--line); color: var(--ink2); font-size: 14px; }
+  .presets button:hover { color: var(--ink); background: rgba(255,255,255,.12); }
+  input[type=range] { width: 100%; accent-color: var(--green); height: 28px; }
+  @media (max-width: 820px) { .calc { grid-template-columns: 1fr; } }
+
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .step { padding: 28px; border-radius: 24px; background: rgba(255,255,255,.04); box-shadow: inset 0 0 0 1px var(--line); }
+  .step i { font: 800 64px/1 var(--display); font-style: normal; letter-spacing: -.05em; background: linear-gradient(180deg, #fff, rgba(255,255,255,.15)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .step h3 { margin-top: 20px; }
+  .step p { color: var(--ink2); margin-top: 8px; }
+  @media (max-width: 820px) { .steps { grid-template-columns: 1fr; } }
+
+  .msgs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .msg { padding: 22px; border-radius: 22px; background: rgba(255,255,255,.04); box-shadow: inset 0 0 0 1px var(--line); display: grid; gap: 16px; align-content: space-between; }
+  .msg h3 { font-size: 17px; }
+  .bubble { padding: 14px 16px; border-radius: 18px 18px 18px 6px; background: #1f2c34; color: #e9edef; font-size: 15px; line-height: 1.45; }
+  .bubble .l { color: #53bdeb; word-break: break-all; }
+  @media (max-width: 900px) { .msgs { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<nav class="nav" aria-label="Principal">
+  <a class="brand" href="/"><img src="/icon.svg" alt="" width="28" height="28">GlassDock</a>
+  <a class="link opt" href="/#widgets">Widgets</a>
+  <a class="link opt" href="#como">Como funciona</a>
+  <a class="link" href="#criar" id="navPanel">Criar meu link</a>
+  <a class="btn btn-primary btn-sm" href="/#comprar">Comprar</a>
+</nav>
+
+<!-- ======================================================= PAINEL (quando já tem link) -->
+<section class="panel-sec" id="painel">
+  <div class="wrap">
+    <div class="ph">
+      <h1>Olá, <span id="pName"></span></h1>
+      <div class="linkbox" style="min-width:min(100%,420px)"><b id="pLink"></b><button class="btn btn-primary btn-sm" data-copy-link>Copiar</button></div>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><span>Visitas no link</span><b id="kClicks">0</b></div>
+      <div class="kpi"><span>Vendas</span><b id="kSales">0</b></div>
+      <div class="kpi"><span>Agendado</span><b id="kWait">R$ 0,00</b></div>
+      <div class="kpi"><span>Já recebido</span><b id="kPaid">R$ 0,00</b></div>
+      <div class="kpi hl"><span id="kDueLabel">No próximo PIX</span><b id="kAvail">R$ 0,00</b></div>
+    </div>
+    <div class="card sales"><table><tbody id="pSales"></tbody></table></div>
+    <p class="muted" style="margin-top:14px;font-size:14px" id="pNote"></p>
+  </div>
+</section>
+
+<!-- ======================================================= TOPO -->
+<header class="top" id="criar">
+  <div class="wrap">
+    <div>
+      <h1 class="rv">Indique o GlassDock e fique com metade</h1>
+      <p class="lead rv">Cada pessoa que comprar pelo seu link deixa metade do valor no seu PIX</p>
+      <div class="money rv">R$ 4,45<small>por venda</small></div>
+      <p class="rv">Sem limite de indicações e sem precisar ter comprado</p>
+      <div class="chips rv"><span><b>50%</b> de comissão</span><span>PIX <b>toda segunda</b></span><span>Link curto com <b>o seu nome</b></span></div>
+    </div>
+
+    <div class="card form-card rv" id="formCard">
+      <form id="form" novalidate style="display:grid;gap:16px">
+        <h2>Crie o seu link</h2>
+        <div class="field"><label for="fName">Nome</label><input class="input" id="fName" autocomplete="name" required placeholder="Como quer aparecer para quem você indicar"></div>
+        <div class="field"><label for="fEmail">E-mail</label><input class="input" id="fEmail" type="email" autocomplete="email" required placeholder="voce@email.com"></div>
+        <div class="field"><label for="fPix">Chave PIX para receber</label>
+          <div class="two">
+            <select class="input" id="fPixType" aria-label="Tipo de chave">
+              <option value="CPF">CPF</option><option value="EMAIL">E-mail</option><option value="PHONE">Celular</option><option value="RANDOM">Aleatória</option><option value="CNPJ">CNPJ</option>
+            </select>
+            <input class="input" id="fPix" required placeholder="000.000.000-00">
+          </div>
+        </div>
+        <div class="field"><label for="fSlug">Seu link</label>
+          <div class="slug"><span id="host">glassdock.com.br/</span><input id="fSlug" autocomplete="off" spellcheck="false" maxlength="24" placeholder="seunome"></div>
+          <div class="hint" id="slugHint">Ele preenche sozinho com o seu nome, mas dá para mudar</div>
+        </div>
+        <div class="err" id="err" role="alert"></div>
+        <button class="btn btn-primary btn-lg" type="submit" id="submit">Criar meu link</button>
+        <p class="fine">Já tem um link? Use o mesmo e-mail e chave PIX para recuperar</p>
+      </form>
+
+      <div class="done" id="done">
+        <h2>Pronto, <span id="dName"></span></h2>
+        <p class="muted" style="margin-top:-8px">Esse é o seu link. Quem comprar por ele vê que foi você que indicou</p>
+        <div class="linkbox"><b id="dLink"></b><button class="btn btn-primary btn-sm" data-copy-link>Copiar</button></div>
+        <div class="share">
+          <a id="shWa" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="#25D366"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.8 14.2c-.2.7-1.4 1.3-2 1.4-.5.1-1.2.1-1.9-.1a17 17 0 0 1-1.8-.7 13.7 13.7 0 0 1-5.2-4.6c-.4-.5-1.3-1.7-1.3-3.3s.8-2.3 1.1-2.6c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .6l-.3.5-.4.5c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.4 2.4 1.5.3.1.5.1.6-.1l.9-1c.2-.3.4-.2.6-.1l2 1c.3.1.5.2.5.3.1.2.1.7-.1 1.4z"/></svg>WhatsApp</a>
+          <a id="shTg" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="#2AABEE"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm4.6 6.8l-1.6 7.7c-.1.6-.5.7-1 .4l-2.6-1.9-1.3 1.2c-.1.1-.3.3-.6.3l.2-2.7 4.9-4.4c.2-.2 0-.3-.3-.1l-6 3.8-2.6-.8c-.6-.2-.6-.6.1-.9l10-3.9c.5-.2.9.1.8.8z"/></svg>Telegram</a>
+          <a id="shX" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="#fff"><path d="M17.8 3h3.1l-6.8 7.7L22 21h-6.2l-4.9-6.4L5.3 21H2.2l7.3-8.3L2 3h6.4l4.4 5.8L17.8 3zm-1.1 16.2h1.7L7.4 4.7H5.6l11.1 14.5z"/></svg>X</a>
+          <button type="button" id="shCopy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="8" y="8" width="12" height="12" rx="3"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>Mensagem</button>
+        </div>
+        <a class="btn btn-glass" href="#painel" id="toPanel">Ver meu painel</a>
+        <p class="fine">O painel fica salvo neste navegador. Para abrir em outro, crie o link de novo com o mesmo e-mail e chave PIX</p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ======================================================= CALCULADORA -->
+<section class="sec" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head rv"><h2>Quanto dá para ganhar</h2><p class="lead">Arraste e veja. Um grupo de amigos já paga o seu GlassDock algumas vezes</p></div>
+    <div class="calc rv">
+      <div class="card">
+        <span class="muted">Pessoas que compram pelo seu link</span>
+        <div class="people"><span id="cN">20</span> pessoas</div>
+        <input type="range" id="cRange" min="1" max="500" value="20" aria-label="Pessoas">
+        <div class="presets">
+          <button data-n="5">Família</button><button data-n="30">Grupo da faculdade</button><button data-n="80">Servidor do Discord</button><button data-n="300">Seus seguidores</button>
+        </div>
+      </div>
+      <div class="card result"><b id="cV">R$ 89,00</b><span>direto no seu PIX</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================= COMO FUNCIONA -->
+<section class="sec" id="como" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head rv"><h2>Como funciona</h2></div>
+    <div class="steps">
+      <div class="step rv"><i>1</i><h3>Crie o seu link</h3><p>Nome, e-mail e chave PIX. Leva meio minuto e o link sai com o seu nome</p></div>
+      <div class="step rv"><i>2</i><h3>Mostre a sua dock</h3><p>Print, vídeo, grupo, stories. Quem abrir o seu link vê que a indicação é sua</p></div>
+      <div class="step rv"><i>3</i><h3>Receba no PIX</h3><p>Passados 7 dias da venda, ela entra no PIX da segunda-feira seguinte, sem valor mínimo</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================= MENSAGENS -->
+<section class="sec" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head rv"><h2>Mensagens prontas</h2><p class="lead">Copie, cole e mande. O seu link já vai junto</p></div>
+    <div class="msgs" id="msgs"></div>
+  </div>
+</section>
+
+<!-- ======================================================= REGRAS -->
+<section class="sec" id="regras" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head center rv"><h2>Regras, sem letra miúda</h2></div>
+    <div class="faq rv">
+      <details><summary>Quando eu recebo?</summary><p>Cada venda espera 7 dias, que é o prazo para a pessoa pedir reembolso. Se não teve reembolso, a comissão cai na sua chave PIX na primeira segunda-feira depois desses 7 dias. Não tem valor mínimo: uma venda já vira PIX</p></details>
+      <details><summary>Como a venda conta para mim?</summary><p>A pessoa abre o seu link e compra em até 60 dias, no mesmo navegador. Se ela abrir o link de outra pessoa depois, vale o último</p></details>
+      <details><summary>Preciso ter comprado o GlassDock?</summary><p>Não. Qualquer pessoa pode indicar</p></details>
+      <details><summary>Tem limite de indicações?</summary><p>Nenhum. Quanto mais gente comprar pelo seu link, mais você recebe</p></details>
+      <details><summary>Posso comprar pelo meu próprio link?</summary><p>Pode, mas compra feita com o mesmo e-mail do seu cadastro não gera comissão</p></details>
+      <details><summary>E se a pessoa pedir o dinheiro de volta?</summary><p>A comissão daquela venda é cancelada. Por isso a espera de 7 dias antes de liberar</p></details>
+      <details><summary>Posso trocar a minha chave PIX?</summary><p>Fale com a gente pelo e-mail de suporte que a gente troca</p></details>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <a class="brand" href="/"><img src="/icon.svg" alt="" width="24" height="24">GlassDock</a>
+    <a href="/">Página inicial</a>
+    <a href="#regras">Regras</a>
+  </div>
+</footer>
+
+<script src="/site.js"></script>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const host = location.host;
+  $('host').textContent = host + '/';
+  const store = { get: (k) => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} } };
+  let me = null; // { slug, name, link, key }
+
+  /* ---------- mensagens prontas */
+  const MSGS = [
+    ['Para o grupo', 'Achei um app que troca a barra de tarefas do Windows por uma dock tipo a do Mac, com widget de clima, música, pomodoro e até um gatinho andando em cima. Custa R$ 8,90 uma vez só'],
+    ['Para stories ou X', 'Minha barra de tarefas agora tem clima, música tocando e um gato passeando. R$ 8,90 e é seu'],
+    ['Para quem programa', 'Pra quem usa Claude Code, Codex ou OpenCode: tem uma dock pro Windows que mostra o seu limite de uso ao vivo, junto com CPU, rede e pomodoro'],
+  ];
+  const linkText = () => (me ? `${host}/${me.slug}` : `${host}/seunome`);
+  function renderMsgs() {
+    $('msgs').innerHTML = MSGS.map(([t, m], i) => `<div class="msg rv in"><h3>${t}</h3><div class="bubble">${m}<br><span class="l">${linkText()}</span></div><button class="btn btn-glass btn-sm" data-msg="${i}">Copiar mensagem</button></div>`).join('');
+  }
+  renderMsgs();
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-msg]');
+    if (b) {
+      if (!me) { toast('Crie o seu link primeiro, aí a mensagem já sai com ele'); document.getElementById('criar').scrollIntoView({ behavior: 'smooth' }); return; }
+      copyText(`${MSGS[+b.dataset.msg][1]}\n${me.link}`, 'Mensagem copiada');
+    }
+    if (e.target.closest('[data-copy-link]') && me) copyText(me.link, 'Link copiado');
+  });
+
+  /* ---------- calculadora */
+  const calc = (n) => { $('cN').textContent = n; $('cV').textContent = brl(n * 445); };
+  $('cRange').addEventListener('input', (e) => calc(+e.target.value));
+  document.querySelectorAll('.presets button').forEach((b) => b.addEventListener('click', () => { $('cRange').value = b.dataset.n; calc(+b.dataset.n); }));
+  calc(20);
+
+  /* ---------- link: preenche com o nome e confere se está livre */
+  const slugify = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9 -]/g, '').trim().split(/\s+/)[0] || '';
+  let slugTouched = false, slugTimer = 0, slugOk = true;
+  $('fName').addEventListener('input', () => { if (!slugTouched) { $('fSlug').value = slugify($('fName').value).slice(0, 24); checkSlug(); } });
+  $('fSlug').addEventListener('input', () => {
+    slugTouched = true;
+    $('fSlug').value = $('fSlug').value.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 24);
+    checkSlug();
+  });
+  function checkSlug() {
+    clearTimeout(slugTimer);
+    const s = $('fSlug').value, h = $('slugHint');
+    if (!s) { h.className = 'hint'; h.textContent = 'Ele preenche sozinho com o seu nome, mas dá para mudar'; slugOk = true; return; }
+    slugTimer = setTimeout(async () => {
+      try {
+        const d = await (await fetch('/api/slug?s=' + encodeURIComponent(s))).json();
+        if (s !== $('fSlug').value) return;
+        slugOk = d.ok;
+        h.className = 'hint ' + (d.ok ? 'ok' : 'bad');
+        h.innerHTML = d.ok ? `${host}/${s} está livre` : `${d.reason}${d.suggestion ? `. Que tal <a href="#" data-sug="${d.suggestion}">${d.suggestion}</a>?` : ''}`;
+      } catch {}
+    }, 280);
+  }
+  $('slugHint').addEventListener('click', (e) => {
+    const a = e.target.closest('[data-sug]');
+    if (a) { e.preventDefault(); $('fSlug').value = a.dataset.sug; slugTouched = true; checkSlug(); }
+  });
+
+  const PH = { CPF: '000.000.000-00', CNPJ: '00.000.000/0000-00', EMAIL: 'voce@email.com', PHONE: '(11) 99999-9999', RANDOM: 'chave aleatória' };
+  $('fPixType').addEventListener('change', () => { $('fPix').placeholder = PH[$('fPixType').value]; });
+
+  /* ---------- criar */
+  $('form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    $('err').textContent = '';
+    const btn = $('submit'), label = btn.innerHTML;
+    btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Criando';
+    try {
+      const r = await fetch('/api/indicadores', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: $('fName').value, email: $('fEmail').value, pixType: $('fPixType').value, pixKey: $('fPix').value, slug: $('fSlug').value }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Não deu certo agora');
+      me = d;
+      store.set('gd_ref_key', d.key);
+      showDone();
+      loadPanel();
+    } catch (err) {
+      $('err').textContent = err.message === 'Failed to fetch' ? 'Sem conexão com o servidor' : err.message;
+    } finally {
+      btn.disabled = false; btn.innerHTML = label;
+    }
+  });
+
+  function showDone() {
+    $('form').style.display = 'none';
+    $('done').style.display = 'grid';
+    $('dName').textContent = me.name.split(' ')[0];
+    $('dLink').textContent = linkText();
+    const msg = `${MSGS[0][1]}\n${me.link}`;
+    $('shWa').href = 'https://wa.me/?text=' + encodeURIComponent(msg);
+    $('shTg').href = 'https://t.me/share/url?url=' + encodeURIComponent(me.link) + '&text=' + encodeURIComponent(MSGS[0][1]);
+    $('shX').href = 'https://x.com/intent/post?text=' + encodeURIComponent(`${MSGS[1][1]}\n${me.link}`);
+    $('shCopy').onclick = () => copyText(msg, 'Mensagem copiada');
+    $('navPanel').textContent = 'Meu painel';
+    $('navPanel').href = '#painel';
+    renderMsgs();
+  }
+
+  /* ---------- painel */
+  async function loadPanel() {
+    const key = new URLSearchParams(location.search).get('k') || store.get('gd_ref_key');
+    if (!key) return;
+    try {
+      const r = await fetch('/api/indicadores/me?k=' + encodeURIComponent(key));
+      if (!r.ok) return;
+      const d = await r.json();
+      store.set('gd_ref_key', key);
+      me = { slug: d.slug, name: d.name, link: d.link, key };
+      document.body.classList.add('has-key');
+      $('pName').textContent = d.name.split(' ')[0];
+      $('pLink').textContent = linkText();
+      $('kClicks').textContent = d.clicks;
+      $('kSales').textContent = d.sales;
+      const dmy = (d) => { const [, m, dd] = d.split('-'); return `${dd}/${m}`; };
+      $('kWait').textContent = brl(d.waiting);
+      $('kAvail').textContent = brl(d.due || 0);
+      $('kDueLabel').textContent = d.due ? 'No PIX desta semana' : (d.next ? 'Próximo PIX em ' + dmy(d.next) : 'No próximo PIX');
+      if (!d.due && d.next) $('kAvail').textContent = brl(d.recent.filter((s) => s.payoutOn === d.next && s.status === 'agendado').reduce((a, s) => a + s.amount, 0));
+      $('kPaid').textContent = brl(d.paid);
+      const fmt = (t) => new Date(t).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+      $('pSales').innerHTML = d.recent.length
+        ? d.recent.map((s) => `<tr><td>Venda em ${fmt(s.at)}<span class="st ${s.status}">${s.status === 'pago' ? 'pago' : s.status === 'hoje' ? 'no PIX desta semana' : 'cai em ' + dmy(s.payoutOn)}</span></td><td><b>${brl(s.amount)}</b></td></tr>`).join('')
+        : '<tr><td class="empty" colspan="2">Nenhuma venda ainda. Mande o seu link para alguém que vive reclamando da barra do Windows</td></tr>';
+      $('pNote').textContent = `Cada comissão cai na chave ${d.pix} na primeira segunda-feira depois de 7 dias da venda, sem valor mínimo`;
+      showDone();
+    } catch {}
+  }
+  loadPanel();
+})();
+</script>
+</body>
+</html>
