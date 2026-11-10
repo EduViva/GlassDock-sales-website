@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Seu GlassDock</title>
+<title>Pagamento do GlassDock</title>
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#07070b">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
@@ -28,6 +28,18 @@
   .steps strong { color: var(--ink); font-weight: 600; }
   .keep { margin-top: 18px; font-size: 14.5px; color: var(--ink3); }
   .keep button { background: none; border: 0; color: var(--accent); cursor: pointer; padding: 0; font-size: inherit; }
+  .pix-card { margin-top: 30px; padding: 26px; display: grid; gap: 18px; justify-items: center; }
+  .qr { width: 232px; height: 232px; border-radius: 18px; background: #fff; padding: 12px; display: grid; place-items: center; box-shadow: 0 16px 40px rgba(0,0,0,.35); }
+  .qr img { width: 100%; height: 100%; image-rendering: pixelated; }
+  .qr.noimg { font-size: 14px; color: #444; padding: 20px; }
+  .copy-row { display: flex; gap: 8px; width: 100%; }
+  .copy-row input { flex: 1; min-width: 0; font-family: ui-monospace, Consolas, monospace; font-size: 13px; color: var(--ink2); }
+  .pix-meta { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 18px; color: var(--ink2); font-size: 14.5px; }
+  .pix-meta b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .live { display: inline-flex; align-items: center; gap: 8px; }
+  .live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 0 rgba(48,209,88,.6); animation: ping 1.6s infinite; }
+  @keyframes ping { 70% { box-shadow: 0 0 0 9px rgba(48,209,88,0); } 100% { box-shadow: 0 0 0 0 rgba(48,209,88,0); } }
+  .how { text-align: left; color: var(--ink2); font-size: 14.5px; display: grid; gap: 6px; width: 100%; }
   .refbox { margin-top: 26px; padding: 26px; border-radius: 24px; text-align: left; display: flex; gap: 20px; align-items: center; flex-wrap: wrap;
     background: radial-gradient(80% 120% at 0% 0%, rgba(90,184,255,.35), transparent 60%), radial-gradient(80% 120% at 100% 100%, rgba(255,107,139,.3), transparent 60%), linear-gradient(135deg, #2a3fa0, #5E3BEE);
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); }
@@ -46,8 +58,20 @@
   <div class="box">
     <div class="state on" id="sWait">
       <div class="wait-ic"></div>
-      <h1>Confirmando o pagamento</h1>
-      <p class="lead">Com PIX costuma levar poucos segundos. Pode deixar esta página aberta</p>
+      <h1>Um instante</h1>
+      <p class="lead">Carregando o seu pedido</p>
+    </div>
+
+    <div class="state" id="sPix">
+      <h1>Pague com PIX</h1>
+      <p class="lead">Escaneie o QR code no app do seu banco ou use o PIX copia e cola</p>
+      <div class="card pix-card">
+        <div class="qr" id="qr"></div>
+        <div class="copy-row"><input class="input" id="pixCode" readonly aria-label="PIX copia e cola"><button class="btn btn-primary" id="copyPix">Copiar</button></div>
+        <div class="pix-meta"><span>R$ <b>8,90</b></span><span>Expira em <b id="left">30:00</b></span><span class="live">Esperando o pagamento</span></div>
+        <div class="how"><span>1. Abra o app do seu banco e escolha pagar com PIX</span><span>2. Escaneie o QR code ou cole o código</span><span>3. Confirme. Esta página libera o download sozinha</span></div>
+        <a class="muted" id="ticket" target="_blank" rel="noopener" style="font-size:14px;display:none">Abrir o PIX no Mercado Pago</a>
+      </div>
     </div>
 
     <div class="state" id="sPaid">
@@ -85,7 +109,20 @@
   document.getElementById('copyLink').onclick = () => copyText(location.href, 'Link copiado');
   if (!id) { show('sOther'); return; }
 
-  let tries = 0;
+  let tries = 0, expires = 0, shown = false;
+  const $ = (x) => document.getElementById(x);
+  $('copyPix').onclick = () => copyText($('pixCode').value, 'Código PIX copiado');
+  setInterval(() => {
+    if (!expires) return;
+    const ms = Math.max(0, expires - Date.now()), m = Math.floor(ms / 60000), sec = Math.floor(ms / 1000) % 60;
+    $('left').textContent = `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+  }, 1000);
+  function expired() {
+    $('oTitle').textContent = 'Este PIX expirou';
+    $('oText').textContent = 'Nenhum valor foi cobrado. Gere um novo PIX para comprar';
+    const a = document.querySelector('#sOther .btn'); a.textContent = 'Gerar outro PIX'; a.href = '/?comprar=1';
+    show('sOther');
+  }
   async function poll() {
     tries++;
     try {
@@ -94,6 +131,7 @@
       if (r.status === 404) { show('sOther'); return; }
       if (d.status === 'PAID') {
         document.getElementById('dl').href = d.download;
+        document.title = 'Seu GlassDock';
         show('sPaid');
         return;
       }
@@ -103,13 +141,19 @@
         show('sOther');
         return;
       }
+      if (d.status === 'EXPIRED') { expired(); return; }
+      if (d.pix && !shown) {
+        shown = true;
+        $('pixCode').value = d.pix.code || '';
+        $('qr').innerHTML = d.pix.image ? `<img alt="QR code do PIX" src="data:image/png;base64,${d.pix.image}">` : '<span>Use o código copia e cola abaixo</span>';
+        if (!d.pix.image) $('qr').classList.add('noimg');
+        if (d.pix.url) { $('ticket').href = d.pix.url; $('ticket').style.display = ''; }
+        expires = d.pix.expires ? new Date(d.pix.expires).getTime() : 0;
+        show('sPix');
+      }
+      if (expires && Date.now() > expires + 60000) { expired(); return; }
     } catch {}
-    if (tries > 200) {
-      document.getElementById('oTitle').textContent = 'Ainda não recebemos a confirmação';
-      show('sOther');
-      return;
-    }
-    setTimeout(poll, tries < 20 ? 3000 : 6000);
+    setTimeout(poll, tries < 100 ? 3000 : 6000);
   }
   poll();
 })();

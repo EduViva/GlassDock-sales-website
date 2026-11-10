@@ -34,19 +34,21 @@ r = await post('/api/indicadores', { name: 'Teste', email: `${tag}@exemplo.com`,
 console.log('slug ocupado, e-mail repetido e recuperação ok');
 
 // compra pelo link
-r = await post('/api/checkout', {}, { cookie: `gd_ref=${tag}` });
-const { url } = await r.json();
-const order = new URL(url).searchParams.get('pedido');
-r = await call('/api/pedido?pedido=' + order); assert.equal((await r.json()).status, 'PENDING');
-r = await call(new URL(url).pathname + new URL(url).search + '&email=comprador@x.com'); assert.equal(r.status, 302);
+r = await post('/api/checkout', { email: 'sem-arroba' }); assert.equal(r.status, 400);
+r = await post('/api/checkout', { email: 'comprador@x.com' }, { cookie: `gd_ref=${tag}` });
+const order = (await r.json()).pedido;
+r = await call('/api/pedido?pedido=' + order); let pend = await r.json();
+assert.equal(pend.status, 'PENDING'); assert.ok(pend.pix.code && pend.pix.expires, 'deveria trazer o PIX');
+const url = pend.pix.url; // em FAKE_PAY aponta para /api/dev/pagar
+r = await call(new URL(url).pathname + new URL(url).search); assert.equal(r.status, 302);
 r = await call('/api/pedido?pedido=' + order); const st = await r.json();
 assert.equal(st.status, 'PAID'); assert.equal(st.download, '/baixar/' + order);
 console.log('compra paga', order);
 
 // pagar de novo não duplica; compra pelo próprio link não gera comissão
 await call(new URL(url).pathname + new URL(url).search);
-r = await post('/api/checkout', { ref: tag }); const self = new URL((await r.json()).url);
-await call(self.pathname + self.search + `&email=${tag.toUpperCase()}@EXEMPLO.COM`);
+r = await post('/api/checkout', { ref: tag, email: `${tag.toUpperCase()}@EXEMPLO.COM` }); const selfId = (await r.json()).pedido;
+await call('/api/dev/pagar?pedido=' + selfId);
 
 r = await call('/api/indicadores/me?k=' + ref.key); const panel = await r.json();
 assert.equal(panel.sales, 1, JSON.stringify(panel));
@@ -67,7 +69,7 @@ console.log('admin ok, fila sem a venda nova, "Paguei" recusado sem nada a pagar
 
 // webhook sem assinatura válida é recusado quando há segredo
 env.MP_WEBHOOK_SECRET = 'segredo';
-r = await post('/api/webhook?data.id=123&type=payment', { type: 'payment', data: { id: '123' } }, { 'x-signature': 'ts=1,v1=abc', 'x-request-id': 'x' });
+r = await post('/api/webhook?data.id=ORD01ABC&type=order', { type: 'order', data: { id: 'ORD01ABC' } }, { 'x-signature': 'ts=1,v1=abc', 'x-request-id': 'x' });
 assert.equal(r.status, 401);
 console.log('webhook com assinatura falsa recusado');
 

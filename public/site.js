@@ -30,30 +30,58 @@
     toast(msg || 'Copiado');
   };
 
-  // compra: cria o pedido e vai para o pagamento do AbacatePay
-  document.addEventListener('click', async (e) => {
-    const b = e.target.closest('[data-buy]');
-    if (!b) return;
-    e.preventDefault();
-    if (b.disabled) return;
-    const label = b.innerHTML;
-    b.disabled = true;
-    b.innerHTML = '<span class="spin"></span> Abrindo pagamento';
-    try {
-      const r = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ref: document.body.dataset.ref || null }),
+  // compra: pede o e-mail, gera o PIX e abre a página de pagamento
+  const store = { get: (k) => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} } };
+  let modal;
+  function openBuy() {
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.className = 'buy-modal';
+      modal.innerHTML = `
+        <form class="buy-card" novalidate>
+          <button type="button" class="buy-x" aria-label="Fechar">×</button>
+          <img src="/icon.svg" alt="" width="52" height="52">
+          <h2>GlassDock por R$ 8,90</h2>
+          <p class="muted">Pagamento único por PIX. O download libera assim que o PIX cair</p>
+          <label class="field"><span>Seu e-mail</span><input class="input" type="email" name="email" autocomplete="email" required placeholder="voce@email.com"></label>
+          <div class="buy-err" role="alert"></div>
+          <button class="btn btn-primary btn-lg" type="submit">Gerar PIX</button>
+          <p class="buy-fine">Processado pelo Mercado Pago</p>
+        </form>`;
+      document.body.appendChild(modal);
+      const close = () => modal.classList.remove('show');
+      modal.addEventListener('click', (e) => { if (e.target === modal || e.target.closest('.buy-x')) close(); });
+      addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+      modal.querySelector('form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const f = e.target, btn = f.querySelector('[type=submit]'), err = f.querySelector('.buy-err');
+        const email = f.email.value.trim();
+        err.textContent = '';
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { err.textContent = 'Confira o seu e-mail'; f.email.focus(); return; }
+        btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Gerando PIX';
+        try {
+          const r = await fetch('/api/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, ref: document.body.dataset.ref || null }) });
+          const d = await r.json();
+          if (!r.ok || !d.pedido) throw new Error(d.error || 'Falhou');
+          store.set('gd_email', email);
+          location.href = '/obrigado?pedido=' + d.pedido;
+        } catch (x) {
+          err.textContent = x.message && x.message !== 'Failed to fetch' ? x.message : 'Sem conexão com o servidor. Tente de novo';
+          btn.disabled = false; btn.textContent = 'Gerar PIX';
+        }
       });
-      const d = await r.json();
-      if (!r.ok || !d.url) throw new Error(d.error || 'Falhou');
-      location.href = d.url;
-    } catch (err) {
-      toast(err.message && err.message !== 'Failed to fetch' ? err.message : 'Sem conexão com o servidor. Tente de novo', 3600);
-      b.disabled = false;
-      b.innerHTML = label;
     }
+    const input = modal.querySelector('[name=email]');
+    if (!input.value) input.value = store.get('gd_email') || '';
+    modal.classList.add('show');
+    setTimeout(() => input.focus(), 50);
+  }
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('[data-buy]')) return;
+    e.preventDefault();
+    openBuy();
   });
+  if (/[?&]comprar=1/.test(location.search)) { history.replaceState(null, '', location.pathname); setTimeout(openBuy, 300); }
 
   // números que contam até o valor quando aparecem
   const counters = document.querySelectorAll('[data-count]');

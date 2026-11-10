@@ -4,7 +4,7 @@ Página de vendas, entrega do download e programa de indicação (50% por venda)
 
 - **Cloudflare Worker**: serve as páginas de `public/` e a API (`src/worker.js`)
 - **Supabase**: banco (pedidos, indicadores, comissões, PIX enviados) e o `GlassDock.exe` num bucket privado
-- **Mercado Pago**: Checkout Pro com PIX e cartão
+- **Mercado Pago**: Checkout Transparente (API Orders), só PIX, com o QR code dentro do próprio site
 
 ## Páginas
 
@@ -13,20 +13,21 @@ Página de vendas, entrega do download e programa de indicação (50% por venda)
 | `/` | Página de vendas |
 | `/indique` | Cadastro do indicador, link curto e painel com visitas, vendas e o próximo PIX |
 | `/fulano` | A página de vendas com "Fulano te indicou o GlassDock" (guarda a indicação por 60 dias) |
-| `/obrigado?pedido=…` | Confirma o pagamento e libera o download. O link é do cliente para sempre |
+| `/obrigado?pedido=…` | Mostra o QR code e o PIX copia e cola, confirma o pagamento e libera o download. O link é do cliente para sempre |
 | `/baixar/<pedido>` | Baixa o .exe (só para pedido pago) por um link assinado de 5 minutos |
 | `/admin` | Vendas, indicadores e a lista de PIX da semana (pede a `ADMIN_KEY`) |
 
 ## Como a compra funciona
 
-1. O botão Comprar chama `POST /api/checkout`, que cria o pedido no Supabase e uma preferência no Mercado Pago com `external_reference` = id do pedido.
-2. O cliente paga no Mercado Pago e volta para `/obrigado?pedido=…`.
-3. A confirmação chega por dois caminhos, o que vier primeiro:
-   - o aviso (webhook) do Mercado Pago em `/api/webhook`, conferido pela assinatura `x-signature`;
-   - a própria página de obrigado, que pergunta ao Mercado Pago (`/v1/payments/search`) se o aviso ainda não chegou.
+1. O botão Comprar pede o e-mail (o Mercado Pago exige) e chama `POST /api/checkout`.
+2. O servidor cria o pedido no Supabase e uma order Pix no Mercado Pago (`POST /v1/orders`, `processing_mode: automatic`, PIX válido por 30 minutos) com `external_reference` = id do pedido.
+3. O cliente vai para `/obrigado?pedido=…`, que mostra o QR code e o copia e cola e fica esperando.
+4. A confirmação chega por dois caminhos, o que vier primeiro:
+   - o aviso (webhook, tópico **Order**) em `/api/webhook`, conferido pela assinatura `x-signature`;
+   - a própria página, que consulta `GET /v1/orders/{id}` a cada 3 segundos.
 
-   Nos dois casos o servidor lê o pagamento direto da API do Mercado Pago e nunca confia no corpo do aviso.
-4. Reembolso ou contestação (`refunded`, `charged_back`) cancela o pedido e a comissão que ainda não foi paga.
+   Nos dois casos o servidor lê a order direto da API do Mercado Pago e nunca confia no corpo do aviso. Paga = `processed` / `accredited`.
+5. `refunded`, `charged_back` ou reembolso parcial cancelam o pedido e a comissão que ainda não foi paga. PIX vencido (`canceled`, `expired`, `failed`) marca o pedido como expirado.
 
 ## Comissões
 
@@ -66,10 +67,10 @@ Todas as tabelas têm RLS ligado e nenhuma policy: só o servidor, com a chave s
 
 ### 1. Mercado Pago
 
-1. Em [Suas integrações](https://www.mercadopago.com.br/developers/panel/app), crie uma aplicação do tipo Checkout Pro.
-2. Copie o **Access Token de produção**.
-3. Em **Webhooks**, cadastre `https://SEU-DOMINIO/api/webhook` com o evento **Pagamentos** e copie a **assinatura secreta**.
-4. Confira se a conta tem uma chave PIX cadastrada, senão o PIX não aparece no checkout.
+1. Em [Suas integrações](https://www.mercadopago.com.br/developers/panel/app), crie uma aplicação de **Pagamentos online** com **Checkout Transparente** (API Orders).
+2. Em **Credenciais › Produção**, ative o ambiente de produção e copie o **Access Token**.
+3. Em **Webhooks**, no modo **Produção**, cadastre `https://SEU-DOMINIO/api/webhook` com o evento **Order (Mercado Pago)** e copie a **assinatura secreta**.
+4. Confira se a conta tem uma chave PIX cadastrada, senão o PIX não é gerado.
 
 ### 2. Supabase
 
@@ -140,4 +141,6 @@ SUPABASE_SECRET_KEY=sb_secret_... node test/e2e.mjs
 | `PRICE_CENTS` | 890 | Preço cobrado |
 | `COMMISSION_PERCENT` | 50 | Comissão do indicador |
 | `HOLD_DAYS` | 7 | Dias de espera antes da segunda-feira de pagamento |
+| `PIX_EXPIRATION` | PT30M | Validade do QR code (ISO 8601, mínimo 30 minutos) |
+| `MP_TEST` | (vazio) | `1` com credenciais de teste: o Mercado Pago aprova o PIX sozinho |
 | `EXE_KEY` | GlassDock.exe | Nome do arquivo no bucket `releases` |

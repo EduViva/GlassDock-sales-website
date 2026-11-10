@@ -276,3 +276,19 @@ select.input option { background: #1c1c22; }
 .w { container-type: inline-size; }
 .mono { font-variant-numeric: tabular-nums; }
 .dock.nomotion .d-item { transition: none !important; }
+
+/* ---------- janela de compra */
+.buy-modal { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 16px; background: rgba(5, 5, 10, .55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); opacity: 0; pointer-events: none; transition: opacity .2s; }
+.buy-modal.show { opacity: 1; pointer-events: auto; }
+.buy-card { position: relative; width: min(420px, 100%); display: grid; gap: 14px; padding: 30px 26px 22px; border-radius: 26px; text-align: center; justify-items: center;
+  background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,0) 40%), rgba(24, 24, 30, .94);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.12), 0 30px 80px rgba(0,0,0,.5); transform: translateY(12px) scale(.98); transition: transform .25s cubic-bezier(.2,.8,.2,1); }
+.buy-modal.show .buy-card { transform: none; }
+.buy-card h2 { font-size: 26px; }
+.buy-card .field { width: 100%; text-align: left; }
+.buy-card .btn { width: 100%; }
+.buy-err { color: #ff8a80; font-size: 14.5px; min-height: 0; }
+.buy-err:empty { display: none; }
+.buy-fine { color: var(--ink3); font-size: 13px; }
+.buy-x { position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; border-radius: 50%; border: 0; background: rgba(255,255,255,.08); color: var(--ink2); font-size: 22px; line-height: 1; cursor: pointer; }
+.buy-x:hover { background: rgba(255,255,255,.14); color: var(--ink); }

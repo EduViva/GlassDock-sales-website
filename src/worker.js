@@ -1,5 +1,5 @@
 // GlassDock: loja, entrega do download e programa de indicação
-// Cloudflare Worker (páginas + API) · Supabase (banco e o .exe) · Mercado Pago (pagamento)
+// Cloudflare Worker (páginas + API) · Supabase (banco e o .exe) · Mercado Pago Checkout Transparente (Pix, API Orders)
 
 const MP = 'https://api.mercadopago.com';
 const REF_COOKIE = 'gd_ref';
@@ -77,72 +77,95 @@ async function referralLanding(req, env, ctx, db, r) {
 
 async function checkout(req, env, db, url) {
   const body = await req.json().catch(() => ({}));
+  const email = String(body.email || '').trim().toLowerCase().slice(0, 120);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: 'Confira o seu e-mail' }, 400);
+
   let ref = String(body.ref || getCookie(req, REF_COOKIE) || '').toLowerCase();
   if (ref && (!SLUG_RE.test(ref) || !(await db.one('referrers', `slug=eq.${ref}&select=slug`)))) ref = '';
 
   const id = token(20);
   const amount = int(env.PRICE_CENTS, 890);
-  await db.insert('orders', { id, ref: ref || null, amount });
+  await db.insert('orders', { id, ref: ref || null, amount, email });
 
-  if (env.FAKE_PAY === '1') return json({ url: `${url.origin}/api/dev/pagar?pedido=${id}` });
+  if (env.FAKE_PAY === '1') {
+    await db.update('orders', `id=eq.${id}`, {
+      pix_code: '00020126580014br.gov.bcb.pix-TESTE-GLASSDOCK', pix_url: `${url.origin}/api/dev/pagar?pedido=${id}`,
+      pix_expires: new Date(Date.now() + 30 * 60000).toISOString(),
+    });
+    return json({ pedido: id });
+  }
 
-  const done = `${url.origin}/obrigado?pedido=${id}`;
-  const pref = {
-    items: [{
-      id: 'glassdock', title: 'GlassDock para Windows', description: 'Dock com widgets para Windows 10 e 11',
-      quantity: 1, currency_id: 'BRL', unit_price: amount / 100,
-    }],
+  // Checkout Transparente · API Orders · só Pix
+  const payer = { email };
+  if (env.MP_TEST === '1') payer.first_name = 'APRO'; // credenciais de teste: o Mercado Pago aprova sozinho
+  const res = await mp(env, '/v1/orders', {
+    type: 'online',
+    processing_mode: 'automatic',
+    total_amount: (amount / 100).toFixed(2),
     external_reference: id,
-    back_urls: { success: done, pending: done, failure: `${url.origin}/?pagamento=cancelado` },
-    auto_return: 'approved',
-    statement_descriptor: 'GLASSDOCK',
-    payment_methods: { installments: 1, excluded_payment_types: [{ id: 'ticket' }] },
-    metadata: { pedido: id, indicador: ref || null },
-  };
-  // o Mercado Pago só aceita avisos para endereços públicos em https
-  if (url.protocol === 'https:') pref.notification_url = `${url.origin}/api/webhook`;
-
-  const res = await mp(env, '/checkout/preferences', pref);
+    payer,
+    transactions: {
+      payments: [{
+        amount: (amount / 100).toFixed(2),
+        payment_method: { id: 'pix', type: 'bank_transfer' },
+        expiration_time: env.PIX_EXPIRATION || 'PT30M',
+      }],
+    },
+  }, id);
   if (!res.ok) {
     console.error('checkout', res.status, JSON.stringify(res.data));
-    return json({ error: 'Não deu para abrir o pagamento agora. Tente de novo em instantes' }, 502);
+    return json({ error: 'Não deu para gerar o PIX agora. Tente de novo em instantes' }, 502);
   }
-  await db.update('orders', `id=eq.${id}`, { mp_preference: res.data.id });
-  return json({ url: res.data.init_point });
+  const pay = res.data.transactions?.payments?.[0] || {};
+  const pm = pay.payment_method || {};
+  await db.update('orders', `id=eq.${id}`, {
+    mp_order: res.data.id,
+    pix_code: pm.qr_code || null,
+    pix_image: pm.qr_code_base64 || null,
+    pix_url: pm.ticket_url || null,
+    pix_expires: pay.date_of_expiration || new Date(Date.now() + 30 * 60000).toISOString(),
+  });
+  return json({ pedido: id });
 }
 
 async function orderStatus(env, db, url) {
   const id = url.searchParams.get('pedido') || '';
   if (!/^[A-Za-z0-9]{20}$/.test(id)) return json({ error: 'Pedido não encontrado' }, 404);
-  let o = await db.one('orders', `id=eq.${id}&select=id,status`);
+  const cols = 'id,status,mp_order,pix_code,pix_image,pix_url,pix_expires';
+  let o = await db.one('orders', `id=eq.${id}&select=${cols}`);
   if (!o) return json({ error: 'Pedido não encontrado' }, 404);
 
   // Se o aviso do Mercado Pago ainda não chegou, pergunta direto para ele
-  if (o.status === 'PENDING' && env.MP_ACCESS_TOKEN) {
-    const res = await mp(env, `/v1/payments/search?external_reference=${id}&sort=date_created&criteria=desc`);
-    const pay = res.ok && (res.data.results || []).find((x) => x.status === 'approved');
-    if (pay) {
-      await applyPayment(env, db, pay);
-      o = await db.one('orders', `id=eq.${id}&select=id,status`);
+  if (o.status === 'PENDING' && o.mp_order && env.MP_ACCESS_TOKEN) {
+    const res = await mp(env, `/v1/orders/${o.mp_order}`);
+    if (res.ok) {
+      await applyOrder(env, db, res.data);
+      o = await db.one('orders', `id=eq.${id}&select=${cols}`);
     }
   }
-  return json({ status: o.status, download: o.status === 'PAID' ? `/baixar/${o.id}` : null });
+  const out = { status: o.status, download: o.status === 'PAID' ? `/baixar/${o.id}` : null };
+  if (o.status === 'PENDING') out.pix = { code: o.pix_code, image: o.pix_image, url: o.pix_url, expires: o.pix_expires };
+  return json(out);
 }
 
-// Aplica o estado de um pagamento do Mercado Pago (sempre lido da API, nunca do corpo do aviso)
-async function applyPayment(env, db, pay) {
-  const order = pay.external_reference;
-  if (!order) return;
-  if (pay.status === 'approved') {
+// Aplica o estado de uma order do Mercado Pago (sempre lida da API, nunca do corpo do aviso)
+async function applyOrder(env, db, mo) {
+  const id = mo.external_reference;
+  if (!id) return;
+  const st = mo.status, det = mo.status_detail;
+  if (st === 'processed' && det === 'accredited') {
+    const o = await db.one('orders', `id=eq.${id}&select=email`);
     await db.rpc('gd_mark_paid', {
-      p_order: order,
-      p_email: pay.payer?.email || null,
-      p_payment: String(pay.id),
+      p_order: id,
+      p_email: o?.email || null,
+      p_payment: mo.id,
       p_percent: int(env.COMMISSION_PERCENT, 50),
       p_hold_days: int(env.HOLD_DAYS, 7),
     });
-  } else if (pay.status === 'refunded' || pay.status === 'charged_back') {
-    await db.rpc('gd_mark_refunded', { p_order: order });
+  } else if (st === 'refunded' || st === 'charged_back' || (st === 'processed' && det === 'partially_refunded')) {
+    await db.rpc('gd_mark_refunded', { p_order: id });
+  } else if (st === 'canceled' || st === 'failed' || st === 'expired') {
+    await db.rpc('gd_mark_expired', { p_order: id });
   }
 }
 
@@ -150,33 +173,39 @@ async function webhook(req, env, db, url) {
   const raw = await req.text();
   let body = {};
   try { body = JSON.parse(raw || '{}'); } catch {}
-  const type = body.type || url.searchParams.get('type') || url.searchParams.get('topic');
-  const dataId = url.searchParams.get('data.id') || body.data?.id || url.searchParams.get('id');
-  if (type !== 'payment' || !dataId) return json({ ok: true, ignored: type || 'sem tipo' });
+  const type = url.searchParams.get('type') || body.type;
+  const dataId = url.searchParams.get('data.id') || body.data?.id;
+  if (type !== 'order' || !dataId) return json({ ok: true, ignored: type || 'sem tipo' });
 
   if (env.MP_WEBHOOK_SECRET && !(await verifyMpSignature(req, env.MP_WEBHOOK_SECRET, String(dataId)))) {
     return json({ error: 'Invalid signature' }, 401);
   }
-  const res = await mp(env, `/v1/payments/${encodeURIComponent(dataId)}`);
-  // pagamento inexistente (ex.: o botão Simular do painel do Mercado Pago): nada a fazer
-  if (res.status === 404) return json({ ok: true, ignored: 'pagamento não encontrado' });
-  if (!res.ok) return json({ error: 'payment lookup failed' }, 502); // o Mercado Pago tenta de novo
-  await applyPayment(env, db, res.data);
+  const res = await mp(env, `/v1/orders/${encodeURIComponent(dataId)}`);
+  // order inexistente (ex.: o botão Simular do painel do Mercado Pago): nada a fazer
+  if (res.status === 404) return json({ ok: true, ignored: 'order não encontrada' });
+  if (!res.ok) return json({ error: 'order lookup failed' }, 502); // o Mercado Pago tenta de novo
+  await applyOrder(env, db, res.data);
   return json({ ok: true });
 }
 
-// x-signature: "ts=...,v1=..." · manifesto "id:<data.id>;request-id:<x-request-id>;ts:<ts>;" assinado com HMAC-SHA256
+// x-signature: "ts=...,v1=..." · manifesto "id:<data.id em minúsculas>;request-id:<x-request-id>;ts:<ts>;" com HMAC-SHA256
 async function verifyMpSignature(req, secret, dataId) {
   const sig = req.headers.get('x-signature') || '';
   const reqId = req.headers.get('x-request-id') || '';
-  const parts = Object.fromEntries(sig.split(',').map((s) => s.trim().split('=')).filter((x) => x.length === 2));
-  if (!parts.ts || !parts.v1) return false;
-  const id = /^[a-z0-9]+$/i.test(dataId) ? dataId.toLowerCase() : dataId;
-  let manifest = `id:${id};`;
+  let ts, v1;
+  for (const part of sig.split(',')) {
+    const i = part.indexOf('=');
+    if (i < 0) continue;
+    const k = part.slice(0, i).trim(), v = part.slice(i + 1).trim();
+    if (k === 'ts') ts = v;
+    if (k === 'v1') v1 = v;
+  }
+  if (!ts || !v1) return false;
+  let manifest = '';
+  if (dataId) manifest += `id:${dataId.toLowerCase()};`;
   if (reqId) manifest += `request-id:${reqId};`;
-  manifest += `ts:${parts.ts};`;
-  const expected = await hmacHex(secret, manifest);
-  return safeEqual(expected, parts.v1);
+  manifest += `ts:${ts};`;
+  return safeEqual(await hmacHex(secret, manifest), v1);
 }
 
 async function download(env, db, id, ctx) {
@@ -199,7 +228,7 @@ async function download(env, db, id, ctx) {
 // Só existe com FAKE_PAY=1 (desenvolvimento): simula o pagamento sem passar pelo Mercado Pago
 async function devPay(env, db, url) {
   const id = url.searchParams.get('pedido') || '';
-  await applyPayment(env, db, { status: 'approved', external_reference: id, id: 'dev', payer: { email: url.searchParams.get('email') } });
+  await applyOrder(env, db, { status: 'processed', status_detail: 'accredited', external_reference: id, id: 'dev' });
   return Response.redirect(`${url.origin}/obrigado?pedido=${id}`, 302);
 }
 
@@ -304,12 +333,12 @@ async function admin(env, db, url) {
   let dueRows = due.data || [];
   if (env.MP_ACCESS_TOKEN && dueRows.length) {
     const ids = dueRows.flatMap((d) => d.orders);
-    const { data: os } = await db.select('orders', `id=in.(${ids.join(',')})&select=id,mp_payment`);
+    const { data: os } = await db.select('orders', `id=in.(${ids.join(',')})&select=id,mp_order`);
     let changed = false;
     for (const o of os || []) {
-      if (!o.mp_payment || o.mp_payment === 'dev') continue;
-      const res = await mp(env, `/v1/payments/${o.mp_payment}`);
-      if (res.ok && res.data.status !== 'approved') { await applyPayment(env, db, res.data); changed = true; }
+      if (!o.mp_order) continue;
+      const res = await mp(env, `/v1/orders/${o.mp_order}`);
+      if (res.ok && !(res.data.status === 'processed' && res.data.status_detail === 'accredited')) { await applyOrder(env, db, res.data); changed = true; }
     }
     if (changed) dueRows = (await db.select('gd_due', 'select=*&order=amount.desc')).data || [];
   }
@@ -370,10 +399,10 @@ function supabase(env) {
 
 /* ------------------------------------------------------------------ Mercado Pago */
 
-async function mp(env, path, body) {
+async function mp(env, path, body, idempotencyKey) {
   if (!env.MP_ACCESS_TOKEN) return { ok: false, status: 0, data: { message: 'MP_ACCESS_TOKEN não configurado' } };
-  const headers = { Authorization: `Bearer ${env.MP_ACCESS_TOKEN}`, 'Content-Type': 'application/json' };
-  if (body) headers['X-Idempotency-Key'] = crypto.randomUUID();
+  const headers = { Authorization: `Bearer ${env.MP_ACCESS_TOKEN}`, 'Content-Type': 'application/json', Accept: 'application/json' };
+  if (body) headers['X-Idempotency-Key'] = idempotencyKey || crypto.randomUUID();
   const res = await fetch(MP + path, { method: body ? 'POST' : 'GET', headers, body: body ? JSON.stringify(body) : undefined });
   const data = await res.json().catch(() => null);
   return { ok: res.ok, status: res.status, data };
