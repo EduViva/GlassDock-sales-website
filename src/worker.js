@@ -158,6 +158,8 @@ async function webhook(req, env, db, url) {
     return json({ error: 'Invalid signature' }, 401);
   }
   const res = await mp(env, `/v1/payments/${encodeURIComponent(dataId)}`);
+  // pagamento inexistente (ex.: o botão Simular do painel do Mercado Pago): nada a fazer
+  if (res.status === 404) return json({ ok: true, ignored: 'pagamento não encontrado' });
   if (!res.ok) return json({ error: 'payment lookup failed' }, 502); // o Mercado Pago tenta de novo
   await applyPayment(env, db, res.data);
   return json({ ok: true });
