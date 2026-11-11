@@ -37,8 +37,11 @@ async function route(req, env, ctx) {
   if (p === '/api/indicadores/me' && m === 'GET') return referrerPanel(env, db, url);
   if (p === '/api/admin' && m === 'GET') return admin(env, db, url);
   if (p === '/api/admin/paguei' && m === 'POST') return adminPaid(req, env, db, url);
+  if (p === '/api/admin/reembolsar' && m === 'POST') return adminRefund(req, env, db, url);
+  if (p === '/api/admin/reenviar' && m === 'POST') return adminResend(req, env, db, url);
+  if (p === '/api/reenviar' && m === 'POST') return resendDownload(req, env, db, url);
   if (p === '/api/dev/pagar' && env.FAKE_PAY === '1') return devPay(env, db, url);
-  if (p.startsWith('/baixar/')) return download(env, db, p.slice(8), ctx);
+  if (p.startsWith('/baixar/')) return download(env, db, p.slice(8), url, ctx);
   if (p.startsWith('/api/')) return json({ error: 'Não encontrado' }, 404);
 
   const asset = await env.ASSETS.fetch(req);
@@ -131,7 +134,7 @@ async function checkout(req, env, db, url) {
 async function orderStatus(env, db, url) {
   const id = url.searchParams.get('pedido') || '';
   if (!/^[A-Za-z0-9]{20}$/.test(id)) return json({ error: 'Pedido não encontrado' }, 404);
-  const cols = 'id,status,mp_order,pix_code,pix_image,pix_url,pix_expires';
+  const cols = 'id,status,email,paid_at,mp_order,pix_code,pix_image,pix_url,pix_expires';
   let o = await db.one('orders', `id=eq.${id}&select=${cols}`);
   if (!o) return json({ error: 'Pedido não encontrado' }, 404);
 
@@ -139,29 +142,43 @@ async function orderStatus(env, db, url) {
   if (o.status === 'PENDING' && o.mp_order && env.MP_ACCESS_TOKEN) {
     const res = await mp(env, `/v1/orders/${o.mp_order}`);
     if (res.ok) {
-      await applyOrder(env, db, res.data);
+      await applyOrder(env, db, res.data, url.origin);
       o = await db.one('orders', `id=eq.${id}&select=${cols}`);
     }
   }
-  const out = { status: o.status, download: o.status === 'PAID' ? `/baixar/${o.id}` : null };
+  const out = { status: o.status, download: null };
+  if (o.status === 'PAID') {
+    let link = await validLink(db, o.id);
+    // pago há pouco e sem link (ex.: o e-mail falhou): gera um agora
+    const hours = int(env.DOWNLOAD_HOURS, 24);
+    if (!link && Date.now() - new Date(o.paid_at).getTime() < hours * 3600e3) {
+      const { data } = await db.select('download_links', `order_id=eq.${o.id}&select=token&limit=1`);
+      if (!data?.length) link = await deliver(env, db, url.origin, o.id);
+    }
+    if (link) { out.download = `/baixar/${link.token}`; out.expires = link.expires_at; }
+    else out.linkExpired = true;
+    out.email = maskEmail(o.email || '');
+  }
   if (o.status === 'PENDING') out.pix = { code: o.pix_code, image: o.pix_image, url: o.pix_url, expires: o.pix_expires };
   return json(out);
 }
 
 // Aplica o estado de uma order do Mercado Pago (sempre lida da API, nunca do corpo do aviso)
-async function applyOrder(env, db, mo) {
+async function applyOrder(env, db, mo, origin) {
   const id = mo.external_reference;
   if (!id) return;
   const st = mo.status, det = mo.status_detail;
   if (st === 'processed' && det === 'accredited') {
     const o = await db.one('orders', `id=eq.${id}&select=email`);
-    await db.rpc('gd_mark_paid', {
+    const r = await db.rpc('gd_mark_paid', {
       p_order: id,
       p_email: o?.email || null,
       p_payment: mo.id,
       p_percent: int(env.COMMISSION_PERCENT, 50),
       p_hold_days: int(env.HOLD_DAYS, 7),
     });
+    // acabou de ser pago: manda o link de download por e-mail
+    if (r.ok && r.data === true && origin) await deliver(env, db, origin, id).catch((e) => console.error('deliver', e));
   } else if (st === 'refunded' || st === 'charged_back' || (st === 'processed' && det === 'partially_refunded')) {
     await db.rpc('gd_mark_refunded', { p_order: id });
   } else if (st === 'canceled' || st === 'failed' || st === 'expired') {
@@ -184,7 +201,7 @@ async function webhook(req, env, db, url) {
   // order inexistente (ex.: o botão Simular do painel do Mercado Pago): nada a fazer
   if (res.status === 404) return json({ ok: true, ignored: 'order não encontrada' });
   if (!res.ok) return json({ error: 'order lookup failed' }, 502); // o Mercado Pago tenta de novo
-  await applyOrder(env, db, res.data);
+  await applyOrder(env, db, res.data, url.origin);
   return json({ ok: true });
 }
 
@@ -208,10 +225,13 @@ async function verifyMpSignature(req, secret, dataId) {
   return safeEqual(await hmacHex(secret, manifest), v1);
 }
 
-async function download(env, db, id, ctx) {
-  if (!/^[A-Za-z0-9]{20}$/.test(id)) return new Response('Link de download inválido', { status: 404 });
-  const o = await db.one('orders', `id=eq.${id}&select=id,status`);
-  if (!o || o.status !== 'PAID') return new Response('Link de download inválido', { status: 404 });
+async function download(env, db, t, url, ctx) {
+  const back = Response.redirect(`${url.origin}/baixar?expirado=1`, 302);
+  if (!/^[A-Za-z0-9]{32}$/.test(t)) return back;
+  const link = await db.one('download_links', `token=eq.${t}&select=token,order_id,expires_at`);
+  if (!link || new Date(link.expires_at) < new Date()) return back;
+  const o = await db.one('orders', `id=eq.${link.order_id}&select=id,status`);
+  if (!o || o.status !== 'PAID') return back;
 
   const key = env.EXE_KEY || 'GlassDock.exe';
   const res = await fetch(`${env.SUPABASE_URL}/storage/v1/object/sign/releases/${key}`, {
@@ -221,14 +241,73 @@ async function download(env, db, id, ctx) {
   });
   const d = await res.json().catch(() => ({}));
   if (!res.ok || !d.signedURL) return new Response('O arquivo ainda não foi enviado para o servidor', { status: 503 });
-  ctx.waitUntil(db.rpc('gd_download', { p_order: id }));
+  ctx.waitUntil(Promise.all([db.rpc('gd_download', { p_order: o.id }), db.rpc('gd_link_download', { p_token: t })]));
   return Response.redirect(`${env.SUPABASE_URL}/storage/v1${d.signedURL}&download=GlassDock.exe`, 302);
+}
+
+/* ------------------------------------------------------------------ links de download e e-mail */
+
+async function validLink(db, orderId) {
+  const now = new Date().toISOString();
+  const { data } = await db.select('download_links', `order_id=eq.${orderId}&expires_at=gt.${now}&select=token,expires_at&order=created_at.desc&limit=1`);
+  return data?.[0] || null;
+}
+
+// Cria um link novo para o pedido e manda por e-mail
+async function deliver(env, db, origin, orderId) {
+  const o = await db.one('orders', `id=eq.${orderId}&select=id,email,status`);
+  if (!o || o.status !== 'PAID') return null;
+  const link = { token: token(32), order_id: o.id, expires_at: new Date(Date.now() + int(env.DOWNLOAD_HOURS, 24) * 3600e3).toISOString() };
+  await db.insert('download_links', link);
+  if (o.email) await sendDownloadEmail(env, o.email, `${origin}/baixar/${link.token}`, origin, link.token);
+  return link;
+}
+
+async function sendDownloadEmail(env, to, href, origin, idem) {
+  if (!env.RESEND_API_KEY || !env.EMAIL_FROM) { console.warn('e-mail não configurado (RESEND_API_KEY / EMAIL_FROM)'); return false; }
+  const hours = int(env.DOWNLOAD_HOURS, 24);
+  const again = `${origin}/baixar`;
+  const html = `<!doctype html><html lang="pt-BR"><body style="margin:0;background:#0b0b10;font-family:Segoe UI,Arial,sans-serif;color:#f2f2f5">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0b0b10;padding:32px 16px"><tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#17171d;border-radius:20px;border:1px solid #2a2a33;padding:32px">
+<tr><td align="center" style="padding-bottom:8px"><img src="${origin}/icon.png" width="56" height="56" alt="" style="border-radius:14px"></td></tr>
+<tr><td align="center" style="font-size:24px;font-weight:700;padding:8px 0 6px">Seu GlassDock está pronto</td></tr>
+<tr><td align="center" style="font-size:15px;line-height:1.5;color:#a9a9b5;padding-bottom:24px">Clique no botão para baixar. O link vale por ${hours} horas</td></tr>
+<tr><td align="center" style="padding-bottom:24px"><a href="${href}" style="display:inline-block;background:#0A84FF;color:#fff;text-decoration:none;font-weight:600;font-size:16px;padding:14px 28px;border-radius:12px">Baixar GlassDock.exe</a></td></tr>
+<tr><td style="font-size:14px;line-height:1.6;color:#a9a9b5;border-top:1px solid #2a2a33;padding-top:18px">
+Coloque o arquivo numa pasta sua e dê dois cliques. Se o Windows mostrar uma tela azul, clique em <b style="color:#f2f2f5">Mais informações</b> e depois em <b style="color:#f2f2f5">Executar assim mesmo</b><br><br>
+O link expirou? Peça outro em <a href="${again}" style="color:#5AB8FF">${again.replace(/^https?:\/\//, '')}</a> com este mesmo e-mail</td></tr>
+</table></td></tr></table></body></html>`;
+  const text = `Seu GlassDock está pronto\n\nBaixe aqui (vale por ${hours} horas):\n${href}\n\nO link expirou? Peça outro em ${again} com este mesmo e-mail`;
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json', 'Idempotency-Key': `dl-${idem}` },
+    body: JSON.stringify({ from: env.EMAIL_FROM, to: [to], subject: 'Seu link para baixar o GlassDock', html, text }),
+  });
+  if (!res.ok) console.error('resend', res.status, await res.text().catch(() => ''));
+  return res.ok;
+}
+
+// "Baixar de novo": quem comprou coloca o e-mail e recebe um link novo
+async function resendDownload(req, env, db, url) {
+  const b = await req.json().catch(() => ({}));
+  const email = String(b.email || '').trim().toLowerCase().slice(0, 120);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: 'Confira o seu e-mail' }, 400);
+  const ok = json({ ok: true }); // a mesma resposta com ou sem compra, para não revelar quem comprou
+  const o = await db.one('orders', `email=eq.${encodeURIComponent(email)}&status=eq.PAID&select=id&order=paid_at.desc`);
+  if (!o) return ok;
+  // no máximo um e-mail a cada 2 minutos por pedido
+  const since = new Date(Date.now() - 120e3).toISOString();
+  const { data: recent } = await db.select('download_links', `order_id=eq.${o.id}&created_at=gt.${since}&expires_at=gt.${new Date().toISOString()}&select=token&limit=1`);
+  if (recent?.length) return ok;
+  await deliver(env, db, url.origin, o.id);
+  return ok;
 }
 
 // Só existe com FAKE_PAY=1 (desenvolvimento): simula o pagamento sem passar pelo Mercado Pago
 async function devPay(env, db, url) {
   const id = url.searchParams.get('pedido') || '';
-  await applyOrder(env, db, { status: 'processed', status_detail: 'accredited', external_reference: id, id: 'dev' });
+  await applyOrder(env, db, { status: 'processed', status_detail: 'accredited', external_reference: id, id: 'dev' }, url.origin);
   return Response.redirect(`${url.origin}/obrigado?pedido=${id}`, 302);
 }
 
@@ -325,7 +404,7 @@ async function admin(env, db, url) {
     db.rpc('gd_stats', {}),
     db.select('gd_due', 'select=*&order=amount.desc'),
     db.select('referrers', 'select=slug,name,email,clicks,created_at&order=created_at.desc&limit=200'),
-    db.select('orders', 'select=id,ref,status,amount,email,created_at,paid_at,downloads&order=created_at.desc&limit=100'),
+    db.select('orders', 'select=id,ref,status,amount,email,created_at,paid_at,refunded_at,downloads,mp_order&order=created_at.desc&limit=100'),
     db.select('payouts', 'select=*&order=created_at.desc&limit=50'),
   ]);
 
@@ -338,7 +417,7 @@ async function admin(env, db, url) {
     for (const o of os || []) {
       if (!o.mp_order) continue;
       const res = await mp(env, `/v1/orders/${o.mp_order}`);
-      if (res.ok && !(res.data.status === 'processed' && res.data.status_detail === 'accredited')) { await applyOrder(env, db, res.data); changed = true; }
+      if (res.ok && !(res.data.status === 'processed' && res.data.status_detail === 'accredited')) { await applyOrder(env, db, res.data, url.origin); changed = true; }
     }
     if (changed) dueRows = (await db.select('gd_due', 'select=*&order=amount.desc')).data || [];
   }
@@ -352,6 +431,56 @@ async function adminPaid(req, env, db, url) {
   const res = await db.rpc('gd_pay', { p_slug: b.slug, p_note: b.note ? String(b.note).slice(0, 200) : null });
   if (!res.ok) return json({ error: res.data?.message || 'Falhou' }, 400);
   return json({ payout: res.data });
+}
+
+// Reembolso total via Pix: POST /v1/orders/{id}/refund sem corpo, depois confere se a order ficou reembolsada
+async function adminRefund(req, env, db, url) {
+  if (!isAdmin(env, url)) return json({ error: 'Unauthorized' }, 401);
+  const b = await req.json().catch(() => ({}));
+  const id = String(b.pedido || '');
+  if (!/^[A-Za-z0-9]{20}$/.test(id)) return json({ error: 'Pedido inválido' }, 400);
+  const o = await db.one('orders', `id=eq.${id}&select=id,status,mp_order`);
+  if (!o) return json({ error: 'Pedido não encontrado' }, 404);
+  if (o.status === 'REFUNDED') return json({ status: 'REFUNDED', message: 'Esse pedido já estava reembolsado' });
+  if (o.status !== 'PAID') return json({ error: 'Só dá para reembolsar pedido pago' }, 400);
+  if (!o.mp_order) return json({ error: 'Esse pedido não tem order no Mercado Pago' }, 400);
+
+  // 1. confere se a order está reembolsável
+  let mo = await mp(env, `/v1/orders/${o.mp_order}`);
+  if (!mo.ok) return json({ error: `Não consegui ler a order no Mercado Pago (${mo.status})` }, 502);
+  if (mo.data.status === 'refunded') {
+    await db.rpc('gd_mark_refunded', { p_order: id });
+    return json({ status: 'REFUNDED', message: 'A order já estava reembolsada no Mercado Pago' });
+  }
+  if (!(mo.data.status === 'processed' && mo.data.status_detail === 'accredited')) {
+    return json({ error: `A order está ${mo.data.status} / ${mo.data.status_detail} e não pode ser reembolsada` }, 400);
+  }
+
+  // 2. reembolso total: corpo vazio, chave de idempotência fixa por pedido (repetir é seguro)
+  const rf = await mp(env, `/v1/orders/${o.mp_order}/refund`, null, `refund-${id}`, 'POST');
+  if (!rf.ok) {
+    console.error('refund', rf.status, JSON.stringify(rf.data));
+    return json({ error: rf.data?.message || rf.data?.errors?.[0]?.message || `O Mercado Pago recusou o reembolso (${rf.status})` }, 502);
+  }
+
+  // 3. confere se ficou reembolsada
+  mo = await mp(env, `/v1/orders/${o.mp_order}`);
+  const refunded = (mo.ok && mo.data.status === 'refunded') || rf.data?.status === 'refunded';
+  if (refunded) await db.rpc('gd_mark_refunded', { p_order: id });
+  return json({
+    status: refunded ? 'REFUNDED' : 'PROCESSING',
+    message: refunded ? 'Reembolso feito. O valor voltou para a conta do pagador' : 'Reembolso pedido. O Mercado Pago ainda está processando e o aviso atualiza o pedido sozinho',
+  });
+}
+
+async function adminResend(req, env, db, url) {
+  if (!isAdmin(env, url)) return json({ error: 'Unauthorized' }, 401);
+  const b = await req.json().catch(() => ({}));
+  const id = String(b.pedido || '');
+  if (!/^[A-Za-z0-9]{20}$/.test(id)) return json({ error: 'Pedido inválido' }, 400);
+  const link = await deliver(env, db, url.origin, id);
+  if (!link) return json({ error: 'Só dá para reenviar pedido pago' }, 400);
+  return json({ ok: true, emailed: !!(env.RESEND_API_KEY && env.EMAIL_FROM), link: `${url.origin}/baixar/${link.token}` });
 }
 
 /* ------------------------------------------------------------------ Supabase (REST) */
@@ -399,11 +528,13 @@ function supabase(env) {
 
 /* ------------------------------------------------------------------ Mercado Pago */
 
-async function mp(env, path, body, idempotencyKey) {
+async function mp(env, path, body, idempotencyKey, method) {
   if (!env.MP_ACCESS_TOKEN) return { ok: false, status: 0, data: { message: 'MP_ACCESS_TOKEN não configurado' } };
-  const headers = { Authorization: `Bearer ${env.MP_ACCESS_TOKEN}`, 'Content-Type': 'application/json', Accept: 'application/json' };
-  if (body) headers['X-Idempotency-Key'] = idempotencyKey || crypto.randomUUID();
-  const res = await fetch(MP + path, { method: body ? 'POST' : 'GET', headers, body: body ? JSON.stringify(body) : undefined });
+  method = method || (body ? 'POST' : 'GET');
+  const headers = { Authorization: `Bearer ${env.MP_ACCESS_TOKEN}`, Accept: 'application/json' };
+  if (body) headers['Content-Type'] = 'application/json';
+  if (method === 'POST') headers['X-Idempotency-Key'] = idempotencyKey || crypto.randomUUID();
+  const res = await fetch(MP + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
   const data = await res.json().catch(() => null);
   return { ok: res.ok, status: res.status, data };
 }
@@ -440,6 +571,10 @@ function normalizePix(type, key) {
     case 'RANDOM': return /^[0-9a-f-]{32,36}$/i.test(key) ? key.toLowerCase() : '';
   }
   return '';
+}
+
+function maskEmail(e) {
+  return e.replace(/^(.)(.*)(@.*)$/, (_, a, b, c) => a + '•'.repeat(Math.min(5, b.length)) + c);
 }
 
 function maskPix(type, key) {

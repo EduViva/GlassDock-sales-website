@@ -42,7 +42,7 @@ assert.equal(pend.status, 'PENDING'); assert.ok(pend.pix.code && pend.pix.expire
 const url = pend.pix.url; // em FAKE_PAY aponta para /api/dev/pagar
 r = await call(new URL(url).pathname + new URL(url).search); assert.equal(r.status, 302);
 r = await call('/api/pedido?pedido=' + order); const st = await r.json();
-assert.equal(st.status, 'PAID'); assert.equal(st.download, '/baixar/' + order);
+assert.equal(st.status, 'PAID'); assert.match(st.download, /^\/baixar\/[A-Za-z0-9]{32}$/);
 console.log('compra paga', order);
 
 // pagar de novo não duplica; compra pelo próprio link não gera comissão
@@ -57,8 +57,8 @@ assert.equal(panel.recent[0].status, 'agendado');
 console.log('painel', { vendas: panel.sales, agendado: panel.waiting, cai: panel.recent[0].payoutOn });
 
 // download (redireciona para o link assinado do Storage, ou 503 se o .exe ainda não subiu)
-r = await call('/baixar/' + order); console.log('download', r.status, (r.headers.get('location') || '').replace(/token=[^&]+/, 'token=…'));
-r = await call('/baixar/AAAAAAAAAAAAAAAAAAAA'); assert.equal(r.status, 404);
+r = await call(st.download); console.log('download', r.status, (r.headers.get('location') || '').replace(/token=[^&]+/, 'token=…'));
+r = await call('/baixar/' + 'A'.repeat(32)); assert.equal(r.headers.get('location'), B + '/baixar?expirado=1');
 
 // admin
 r = await call('/api/admin?k=errada'); assert.equal(r.status, 401);

@@ -79,7 +79,7 @@
       <h1>O GlassDock é seu</h1>
       <p class="lead">Pagamento confirmado. Agora é só baixar</p>
       <a class="btn btn-primary btn-lg dl" id="dl" href="#"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Baixar GlassDock.exe</a>
-      <p class="keep">Este link é seu para sempre e sempre baixa a versão mais nova. <button id="copyLink">Copiar link desta página</button></p>
+      <p class="keep" id="keep">Também mandamos o link para o seu e-mail. Ele vale por 24 horas, e depois é só pedir outro em <a href="/baixar" style="color:var(--accent)">Baixar de novo</a></p>
 
       <div class="card steps">
         <div><b>1</b><span>Coloque o <strong>GlassDock.exe</strong> numa pasta sua, por exemplo Documentos ou uma pasta Apps</span></div>
@@ -106,7 +106,6 @@
 (function () {
   const id = new URLSearchParams(location.search).get('pedido');
   const show = (s) => document.querySelectorAll('.state').forEach((x) => x.classList.toggle('on', x.id === s));
-  document.getElementById('copyLink').onclick = () => copyText(location.href, 'Link copiado');
   if (!id) { show('sOther'); return; }
 
   let tries = 0, expires = 0, shown = false;
@@ -130,7 +129,18 @@
       const d = await r.json();
       if (r.status === 404) { show('sOther'); return; }
       if (d.status === 'PAID') {
+        if (!d.download) {
+          $('oTitle').textContent = 'Seu link de download expirou';
+          $('oText').textContent = 'É só pedir um novo: ele chega no seu e-mail em instantes';
+          const a = document.querySelector('#sOther .btn'); a.textContent = 'Pedir novo link'; a.href = '/baixar';
+          show('sOther');
+          return;
+        }
         document.getElementById('dl').href = d.download;
+        if (d.email && d.expires) {
+          const h = Math.max(1, Math.round((new Date(d.expires) - Date.now()) / 3600e3));
+          $('keep').innerHTML = `Também mandamos o link para <b>${d.email}</b>. Ele vale por mais ${h} ${h > 1 ? 'horas' : 'hora'}, e depois é só pedir outro em <a href="/baixar" style="color:var(--accent)">Baixar de novo</a>`;
+        }
         document.title = 'Seu GlassDock';
         show('sPaid');
         return;

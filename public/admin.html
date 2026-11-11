@@ -28,6 +28,11 @@
   .pay .who span { color: var(--ink2); font-size: 13.5px; }
   .pay .key { font-family: ui-monospace, Consolas, monospace; font-size: 14px; padding: 8px 12px; border-radius: 10px; background: rgba(255,255,255,.07); cursor: pointer; }
   .pay .amt { font: 700 24px var(--display); margin-left: auto; }
+  .btn-danger { background: rgba(255,69,58,.14); color: #ff8a80; box-shadow: inset 0 0 0 1px rgba(255,69,58,.35); }
+  .btn-danger:hover { background: rgba(255,69,58,.24); }
+  .st { font-size: 12.5px; padding: 3px 9px; border-radius: 99px; background: rgba(255,255,255,.08); color: var(--ink2); }
+  .st-PAID { background: rgba(48,209,88,.16); color: #7ee49a; }
+  .st-REFUNDED { background: rgba(255,69,58,.14); color: #ff8a80; }
   .empty { padding: 22px; border-radius: 16px; color: var(--ink2); box-shadow: inset 0 0 0 1px var(--line); }
 </style>
 </head>
@@ -79,9 +84,11 @@ async function load() {
       <button class="btn btn-sm btn-primary" data-paid="${esc(x.slug)}" data-name="${esc(x.name)}" data-amount="${x.amount}">Paguei</button>
     </div>`).join('') : '<div class="empty">Nada para pagar agora</div>';
 
+  const ST = { PENDING: 'Aguardando PIX', PAID: 'Pago', REFUNDED: 'Reembolsado', EXPIRED: 'PIX expirado' };
   $('orders').innerHTML = table([
-    ['Pedido', (x) => esc(x.id)], ['Status', (x) => x.status], ['Valor', (x) => brl(x.amount)], ['Indicador', (x) => esc(x.ref || '')], ['E-mail', (x) => esc(x.email || '')],
-    ['Criado', (x) => dt(x.created_at)], ['Pago', (x) => dt(x.paid_at)], ['Downloads', (x) => x.downloads],
+    ['Pedido', (x) => esc(x.id)], ['Status', (x) => `<span class="st st-${x.status}">${ST[x.status] || x.status}</span>`], ['Valor', (x) => brl(x.amount)], ['Indicador', (x) => esc(x.ref || '')], ['E-mail', (x) => esc(x.email || '')],
+    ['Criado', (x) => dt(x.created_at)], ['Pago', (x) => dt(x.paid_at)], ['Reembolso', (x) => dt(x.refunded_at)], ['Downloads', (x) => x.downloads],
+    ['', (x) => x.status === 'PAID' ? `<button class="btn btn-sm btn-glass" data-resend="${esc(x.id)}">Reenviar link</button> <button class="btn btn-sm btn-danger" data-refund="${esc(x.id)}" data-email="${esc(x.email || '')}" data-amount="${x.amount}">Reembolsar</button>` : ''],
   ], d.orders);
   $('refs').innerHTML = table([
     ['Link', (x) => `<b>/${esc(x.slug)}</b>`], ['Nome', (x) => esc(x.name)], ['E-mail', (x) => esc(x.email)], ['Visitas', (x) => x.clicks], ['Desde', (x) => dt(x.created_at)],
@@ -92,6 +99,25 @@ async function load() {
 }
 
 document.addEventListener('click', async (e) => {
+  const rf = e.target.closest('[data-refund]');
+  if (rf) {
+    if (!confirm(`Reembolsar ${brl(+rf.dataset.amount)} do pedido ${rf.dataset.refund}${rf.dataset.email ? ' (' + rf.dataset.email + ')' : ''}?\n\nO valor volta por PIX para a conta de quem pagou, o download deixa de funcionar e a comissão da indicação, se ainda não foi paga, é cancelada.`)) return;
+    rf.disabled = true; rf.innerHTML = '<span class="spin"></span>';
+    const r = await fetch('/api/admin/reembolsar?k=' + k(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pedido: rf.dataset.refund }) });
+    const d = await r.json();
+    toast(d.message || d.error || 'Falhou', 5000);
+    return load();
+  }
+  const rs = e.target.closest('[data-resend]');
+  if (rs) {
+    rs.disabled = true;
+    const r = await fetch('/api/admin/reenviar?k=' + k(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pedido: rs.dataset.resend }) });
+    const d = await r.json();
+    if (d.link) copyText(d.link, d.emailed ? 'E-mail enviado. O link novo também foi copiado' : 'E-mail não configurado. O link novo foi copiado');
+    else toast(d.error || 'Falhou', 4000);
+    rs.disabled = false;
+    return;
+  }
   const c = e.target.closest('[data-copy]');
   if (c) return copyText(c.dataset.copy, 'Copiado');
   const b = e.target.closest('[data-paid]');

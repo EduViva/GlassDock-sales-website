@@ -17,6 +17,9 @@ COMMISSION_PERCENT = "50"
 HOLD_DAYS = "7"
 # nome do arquivo no bucket "releases" do Supabase
 EXE_KEY = "GlassDock.exe"
+# horas de validade de cada link de download (e-mail e página de pagamento)
+DOWNLOAD_HOURS = "24"
 # validade do QR code do PIX (mínimo 30 minutos)
 PIX_EXPIRATION = "PT30M"
-# Segredos (npx wrangler secret put …): SUPABASE_SECRET_KEY, MP_ACCESS_TOKEN, MP_WEBHOOK_SECRET, ADMIN_KEY
+# Segredos (Cloudflare › Settings › Variables and Secrets, tipo Secret):
+# SUPABASE_SECRET_KEY, MP_ACCESS_TOKEN, MP_WEBHOOK_SECRET, ADMIN_KEY, RESEND_API_KEY, EMAIL_FROM

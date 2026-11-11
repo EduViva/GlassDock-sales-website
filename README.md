@@ -13,9 +13,10 @@ Página de vendas, entrega do download e programa de indicação (50% por venda)
 | `/` | Página de vendas |
 | `/indique` | Cadastro do indicador, link curto e painel com visitas, vendas e o próximo PIX |
 | `/fulano` | A página de vendas com "Fulano te indicou o GlassDock" (guarda a indicação por 60 dias) |
-| `/obrigado?pedido=…` | Mostra o QR code e o PIX copia e cola, confirma o pagamento e libera o download. O link é do cliente para sempre |
-| `/baixar/<pedido>` | Baixa o .exe (só para pedido pago) por um link assinado de 5 minutos |
-| `/admin` | Vendas, indicadores e a lista de PIX da semana (pede a `ADMIN_KEY`) |
+| `/obrigado?pedido=…` | Mostra o QR code e o PIX copia e cola, confirma o pagamento e libera o download |
+| `/baixar` | Baixar de novo: o cliente põe o e-mail da compra e recebe um link novo |
+| `/baixar/<token>` | Link temporário de download (24 h). Expirado, leva para `/baixar` |
+| `/admin` | Vendas, reembolso e reenvio do link por pedido, indicadores e a lista de PIX da semana (pede a `ADMIN_KEY`) |
 
 ## Como a compra funciona
 
@@ -28,6 +29,22 @@ Página de vendas, entrega do download e programa de indicação (50% por venda)
 
    Nos dois casos o servidor lê a order direto da API do Mercado Pago e nunca confia no corpo do aviso. Paga = `processed` / `accredited`.
 5. `refunded`, `charged_back` ou reembolso parcial cancelam o pedido e a comissão que ainda não foi paga. PIX vencido (`canceled`, `expired`, `failed`) marca o pedido como expirado.
+
+## Download
+
+- Quando o pagamento é confirmado, o servidor cria um link `/baixar/<token>` que vale por 24 horas (`DOWNLOAD_HOURS`). Ele aparece na página de pagamento e vai por e-mail pelo [Resend](https://resend.com).
+- Expirado, o link leva para `/baixar`. Ali o cliente põe o e-mail da compra e recebe um link novo. A resposta é a mesma com ou sem compra, para não revelar quem comprou, e sai no máximo um e-mail a cada 2 minutos.
+- No `/admin`, **Reenviar link** gera um link novo, manda por e-mail e copia o link para você.
+
+## Reembolso
+
+No `/admin`, cada pedido pago tem **Reembolsar**. O servidor:
+
+1. lê a order no Mercado Pago e só segue se ela estiver `processed` / `accredited`;
+2. chama `POST /v1/orders/{id}/refund` sem corpo (reembolso total), com `X-Idempotency-Key` fixo por pedido, então repetir é seguro;
+3. lê a order de novo e, se ficou `refunded`, marca o pedido como reembolsado, desliga o download e cancela a comissão que ainda não foi paga.
+
+No PIX o valor volta para a conta de quem pagou.
 
 ## Comissões
 
@@ -141,6 +158,7 @@ SUPABASE_SECRET_KEY=sb_secret_... node test/e2e.mjs
 | `PRICE_CENTS` | 890 | Preço cobrado |
 | `COMMISSION_PERCENT` | 50 | Comissão do indicador |
 | `HOLD_DAYS` | 7 | Dias de espera antes da segunda-feira de pagamento |
+| `DOWNLOAD_HOURS` | 24 | Validade de cada link de download |
 | `PIX_EXPIRATION` | PT30M | Validade do QR code (ISO 8601, mínimo 30 minutos) |
 | `MP_TEST` | (vazio) | `1` com credenciais de teste: o Mercado Pago aprova o PIX sozinho |
 | `EXE_KEY` | GlassDock.exe | Nome do arquivo no bucket `releases` |
