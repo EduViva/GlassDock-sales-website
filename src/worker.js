@@ -163,6 +163,11 @@ async function orderStatus(env, db, url) {
   return json(out);
 }
 
+// A order reembolsada pode vir como status "refunded" ou como "processed" com detalhe "refunded"
+function isRefunded(mo) {
+  return mo?.status === 'refunded' || mo?.status_detail === 'refunded';
+}
+
 // Aplica o estado de uma order do Mercado Pago (sempre lida da API, nunca do corpo do aviso)
 async function applyOrder(env, db, mo, origin) {
   const id = mo.external_reference;
@@ -179,7 +184,7 @@ async function applyOrder(env, db, mo, origin) {
     });
     // acabou de ser pago: manda o link de download por e-mail
     if (r.ok && r.data === true && origin) await deliver(env, db, origin, id).catch((e) => console.error('deliver', e));
-  } else if (st === 'refunded' || st === 'charged_back' || (st === 'processed' && det === 'partially_refunded')) {
+  } else if (isRefunded(mo) || st === 'charged_back' || det === 'partially_refunded') {
     await db.rpc('gd_mark_refunded', { p_order: id });
   } else if (st === 'canceled' || st === 'failed' || st === 'expired') {
     await db.rpc('gd_mark_expired', { p_order: id });
@@ -443,7 +448,7 @@ async function admin(env, db, url) {
     for (const o of os || []) {
       if (!o.mp_order) continue;
       const res = await mp(env, `/v1/orders/${o.mp_order}`);
-      if (res.ok && !(res.data.status === 'processed' && res.data.status_detail === 'accredited')) { await applyOrder(env, db, res.data, url.origin); changed = true; }
+      if (res.ok && (isRefunded(res.data) || !(res.data.status === 'processed' && res.data.status_detail === 'accredited'))) { await applyOrder(env, db, res.data, url.origin); changed = true; }
     }
     if (changed) dueRows = (await db.select('gd_due', 'select=*&order=amount.desc')).data || [];
   }
@@ -474,7 +479,7 @@ async function adminRefund(req, env, db, url) {
   // 1. confere se a order está reembolsável
   let mo = await mp(env, `/v1/orders/${o.mp_order}`);
   if (!mo.ok) return json({ error: `Não consegui ler a order no Mercado Pago (${mo.status})` }, 502);
-  if (mo.data.status === 'refunded') {
+  if (isRefunded(mo.data)) {
     await db.rpc('gd_mark_refunded', { p_order: id });
     return json({ status: 'REFUNDED', message: 'A order já estava reembolsada no Mercado Pago' });
   }
@@ -482,16 +487,30 @@ async function adminRefund(req, env, db, url) {
     return json({ error: `A order está ${mo.data.status} / ${mo.data.status_detail} e não pode ser reembolsada` }, 400);
   }
 
-  // 2. reembolso total: corpo vazio, chave de idempotência fixa por pedido (repetir é seguro)
-  const rf = await mp(env, `/v1/orders/${o.mp_order}/refund`, null, `refund-${id}`, 'POST');
+  // 2. reembolso total: corpo vazio. A chave de idempotência é nova a cada tentativa:
+  //    com uma chave fixa, o Mercado Pago devolveria o mesmo erro guardado mesmo depois de resolvido o motivo.
+  //    Clique duplo não reembolsa duas vezes: o Mercado Pago recusa com order_refund_already_in_process / order_already_refunded.
+  const rf = await mp(env, `/v1/orders/${o.mp_order}/refund`, null, `refund-${id}-${crypto.randomUUID()}`, 'POST');
   if (!rf.ok) {
+    const err = rf.data?.errors?.[0] || {};
+    const code = err.code || rf.data?.code || '';
     console.error('refund', rf.status, JSON.stringify(rf.data));
-    return json({ error: rf.data?.message || rf.data?.errors?.[0]?.message || `O Mercado Pago recusou o reembolso (${rf.status})` }, 502);
+    if (code === 'order_already_refunded') {
+      await db.rpc('gd_mark_refunded', { p_order: id });
+      return json({ status: 'REFUNDED', message: 'A order já estava reembolsada no Mercado Pago' });
+    }
+    if (code === 'order_refund_already_in_process') {
+      return json({ status: 'PROCESSING', message: 'Já existe um reembolso em andamento para essa order. O aviso do Mercado Pago atualiza o pedido sozinho' });
+    }
+    const why = rf.status === 422
+      ? 'O Mercado Pago recusou o reembolso. O motivo mais comum é não ter saldo disponível na conta: o valor da venda precisa estar disponível (não "a liberar" e não sacado). Confira o saldo no app do Mercado Pago e tente de novo'
+      : `O Mercado Pago recusou o reembolso`;
+    return json({ error: `${why} (${rf.status}${code ? ' ' + code : ''}${err.message ? ': ' + err.message : ''})`, mp: rf.data }, 422);
   }
 
   // 3. confere se ficou reembolsada
   mo = await mp(env, `/v1/orders/${o.mp_order}`);
-  const refunded = (mo.ok && mo.data.status === 'refunded') || rf.data?.status === 'refunded';
+  const refunded = (mo.ok && isRefunded(mo.data)) || isRefunded(rf.data);
   if (refunded) await db.rpc('gd_mark_refunded', { p_order: id });
   return json({
     status: refunded ? 'REFUNDED' : 'PROCESSING',

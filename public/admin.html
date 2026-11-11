@@ -105,7 +105,7 @@ document.addEventListener('click', async (e) => {
     rf.disabled = true; rf.innerHTML = '<span class="spin"></span>';
     const r = await fetch('/api/admin/reembolsar?k=' + k(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pedido: rf.dataset.refund }) });
     const d = await r.json();
-    toast(d.message || d.error || 'Falhou', 5000);
+    if (d.error) alert(d.error); else toast(d.message || 'Feito', 5000);
     return load();
   }
   const rs = e.target.closest('[data-resend]');

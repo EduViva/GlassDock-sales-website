@@ -52,10 +52,10 @@ O Gmail manda até cerca de 500 e-mails por dia.
 No `/admin`, cada pedido pago tem **Reembolsar**. O servidor:
 
 1. lê a order no Mercado Pago e só segue se ela estiver `processed` / `accredited`;
-2. chama `POST /v1/orders/{id}/refund` sem corpo (reembolso total), com `X-Idempotency-Key` fixo por pedido, então repetir é seguro;
-3. lê a order de novo e, se ficou `refunded`, marca o pedido como reembolsado, desliga o download e cancela a comissão que ainda não foi paga.
+2. chama `POST /v1/orders/{id}/refund` sem corpo (reembolso total), com um `X-Idempotency-Key` novo a cada tentativa. Clique duplo não reembolsa duas vezes, porque o Mercado Pago recusa um segundo reembolso da mesma order;
+3. lê a order de novo e, se ficou reembolsada (`refunded`, ou `processed` com detalhe `refunded`), marca o pedido como reembolsado, desliga o download e cancela a comissão que ainda não foi paga.
 
-No PIX o valor volta para a conta de quem pagou.
+No PIX o valor volta para a conta de quem pagou. O reembolso sai do **saldo disponível** da sua conta Mercado Pago: sem saldo, o Mercado Pago recusa com `422 Post processing rejected the operation`, e o admin mostra esse motivo.
 
 ## Comissões
 
