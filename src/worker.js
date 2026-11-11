@@ -264,7 +264,7 @@ async function deliver(env, db, origin, orderId) {
 }
 
 async function sendDownloadEmail(env, to, href, origin, idem) {
-  if (!env.RESEND_API_KEY || !env.EMAIL_FROM) { console.warn('e-mail não configurado (RESEND_API_KEY / EMAIL_FROM)'); return false; }
+  if (!emailConfigured(env)) { console.warn('e-mail não configurado (GMAIL_USER + GMAIL_APP_PASSWORD, ou RESEND_API_KEY + EMAIL_FROM)'); return false; }
   const hours = int(env.DOWNLOAD_HOURS, 24);
   const again = `${origin}/baixar`;
   const html = `<!doctype html><html lang="pt-BR"><body style="margin:0;background:#0b0b10;font-family:Segoe UI,Arial,sans-serif;color:#f2f2f5">
@@ -279,13 +279,39 @@ Coloque o arquivo numa pasta sua e dê dois cliques. Se o Windows mostrar uma te
 O link expirou? Peça outro em <a href="${again}" style="color:#5AB8FF">${again.replace(/^https?:\/\//, '')}</a> com este mesmo e-mail</td></tr>
 </table></td></tr></table></body></html>`;
   const text = `Seu GlassDock está pronto\n\nBaixe aqui (vale por ${hours} horas):\n${href}\n\nO link expirou? Peça outro em ${again} com este mesmo e-mail`;
+  const subject = 'Seu link para baixar o GlassDock';
+
+  // Sem domínio próprio: Gmail com senha de app (SMTP, porta 465)
+  if (env.GMAIL_USER && env.GMAIL_APP_PASSWORD) {
+    let mailer;
+    try {
+      const { WorkerMailer } = await import('worker-mailer');
+      mailer = await WorkerMailer.connect({
+        host: 'smtp.gmail.com', port: 465, secure: true, authType: 'plain',
+        credentials: { username: env.GMAIL_USER, password: env.GMAIL_APP_PASSWORD.replace(/\s+/g, '') },
+      });
+      await mailer.send({ from: { name: 'GlassDock', email: env.GMAIL_USER }, to: { email: to }, subject, text, html });
+      return true;
+    } catch (e) {
+      console.error('gmail', e?.message || e);
+      return false;
+    } finally {
+      try { await mailer?.close(); } catch {}
+    }
+  }
+
+  // Com domínio próprio verificado: Resend
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json', 'Idempotency-Key': `dl-${idem}` },
-    body: JSON.stringify({ from: env.EMAIL_FROM, to: [to], subject: 'Seu link para baixar o GlassDock', html, text }),
+    body: JSON.stringify({ from: env.EMAIL_FROM, to: [to], subject, html, text }),
   });
   if (!res.ok) console.error('resend', res.status, await res.text().catch(() => ''));
   return res.ok;
+}
+
+function emailConfigured(env) {
+  return !!((env.GMAIL_USER && env.GMAIL_APP_PASSWORD) || (env.RESEND_API_KEY && env.EMAIL_FROM));
 }
 
 // "Baixar de novo": quem comprou coloca o e-mail e recebe um link novo
@@ -480,7 +506,7 @@ async function adminResend(req, env, db, url) {
   if (!/^[A-Za-z0-9]{20}$/.test(id)) return json({ error: 'Pedido inválido' }, 400);
   const link = await deliver(env, db, url.origin, id);
   if (!link) return json({ error: 'Só dá para reenviar pedido pago' }, 400);
-  return json({ ok: true, emailed: !!(env.RESEND_API_KEY && env.EMAIL_FROM), link: `${url.origin}/baixar/${link.token}` });
+  return json({ ok: true, emailed: emailConfigured(env), link: `${url.origin}/baixar/${link.token}` });
 }
 
 /* ------------------------------------------------------------------ Supabase (REST) */

@@ -32,9 +32,20 @@ Página de vendas, entrega do download e programa de indicação (50% por venda)
 
 ## Download
 
-- Quando o pagamento é confirmado, o servidor cria um link `/baixar/<token>` que vale por 24 horas (`DOWNLOAD_HOURS`). Ele aparece na página de pagamento e vai por e-mail pelo [Resend](https://resend.com).
+- Quando o pagamento é confirmado, o servidor cria um link `/baixar/<token>` que vale por 24 horas (`DOWNLOAD_HOURS`). Ele aparece na página de pagamento e vai por e-mail: pelo Gmail (sem domínio próprio) ou pelo [Resend](https://resend.com) (com domínio próprio).
 - Expirado, o link leva para `/baixar`. Ali o cliente põe o e-mail da compra e recebe um link novo. A resposta é a mesma com ou sem compra, para não revelar quem comprou, e sai no máximo um e-mail a cada 2 minutos.
 - No `/admin`, **Reenviar link** gera um link novo, manda por e-mail e copia o link para você.
+
+### Configurar o e-mail
+
+**Sem domínio próprio (Gmail):** use uma conta Gmail só para o GlassDock.
+1. Ative a verificação em duas etapas da conta em myaccount.google.com › Segurança.
+2. Crie uma senha de app em myaccount.google.com/apppasswords (nome: GlassDock). Ela tem 16 letras.
+3. No Cloudflare, adicione os secrets `GMAIL_USER` (o endereço Gmail) e `GMAIL_APP_PASSWORD` (a senha de app).
+
+O Gmail manda até cerca de 500 e-mails por dia.
+
+**Com domínio próprio (Resend):** verifique o domínio no Resend e adicione `RESEND_API_KEY` e `EMAIL_FROM` (ex.: `GlassDock <download@seudominio.com.br>`). Se os dois estiverem configurados, o Gmail tem prioridade: apague `GMAIL_USER` para passar a usar o Resend.
 
 ## Reembolso
 
