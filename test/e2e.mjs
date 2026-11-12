@@ -7,7 +7,7 @@ globalThis.HTMLRewriter ??= class { on() { return this; } transform(r) { return 
 const env = {
   SUPABASE_URL: process.env.SUPABASE_URL || 'https://hzqpfxpvsaezixlxtkab.supabase.co',
   SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,
-  FAKE_PAY: '1', ADMIN_KEY: 'admin-teste-0123456789', PRICE_CENTS: '890', COMMISSION_PERCENT: '50', HOLD_DAYS: '7',
+  FAKE_PAY: '1', ADMIN_KEY: 'admin-teste-0123456789', PRICE_CENTS: '1190', COMMISSION_PERCENT: '50', HOLD_DAYS: '7',
   ASSETS: { fetch: async () => new Response('<html><body>ok</body></html>', { status: 200, headers: { 'content-type': 'text/html' } }) },
 };
 const B = 'https://glassdock.test';
@@ -52,7 +52,7 @@ await call('/api/dev/pagar?pedido=' + selfId);
 
 r = await call('/api/indicadores/me?k=' + ref.key); const panel = await r.json();
 assert.equal(panel.sales, 1, JSON.stringify(panel));
-assert.equal(panel.waiting, 445);
+assert.equal(panel.waiting, 595);
 assert.equal(panel.recent[0].status, 'agendado');
 console.log('painel', { vendas: panel.sales, agendado: panel.waiting, cai: panel.recent[0].payoutOn });
 

@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GlassDock: a dock que a barra de tarefas do Windows queria ser</title>
-<meta name="description" content="Dock de vidro com 26 widgets que substitui a barra de tarefas do Windows 10 e 11. Leve, nativa e personalizável até o último detalhe. R$ 8,90, pagamento único">
+<meta name="description" content="Dock de vidro com 26 widgets que substitui a barra de tarefas do Windows 10 e 11. Leve, nativa e personalizável até o último detalhe. R$ 11,90, pagamento único">
 <meta property="og:title" content="GlassDock: tudo que você sempre quis na barra de tarefas do Windows">
-<meta property="og:description" content="Tipo a dock do Mac, só que melhor. 26 widgets, workspaces e vidro de verdade por R$ 8,90">
+<meta property="og:description" content="Tipo a dock do Mac, só que melhor. 26 widgets, workspaces e vidro de verdade por R$ 11,90">
 <meta property="og:type" content="website">
 <meta property="og:image" content="/og.png">
 <meta name="theme-color" content="#07070b">
@@ -43,7 +43,7 @@
             radial-gradient(120% 90% at 60% 100%, #ef8fae 0%, transparent 60%),
             linear-gradient(180deg, #3b66b3 0%, #8a74c9 55%, #e59bb3 100%);
     position: relative; margin: clamp(48px, 7vw, 80px) auto 0; width: min(1240px, 100% - 2 * var(--gutter));
-    aspect-ratio: 16 / 7.4; min-height: 300px; border-radius: 28px; overflow: hidden;
+    aspect-ratio: 16 / 8.2; min-height: 520px; border-radius: 28px; overflow: hidden;
     background: var(--wall);
     box-shadow: 0 0 0 1px rgba(255,255,255,.08), 0 40px 120px rgba(40, 30, 120, .45), 0 20px 50px rgba(0,0,0,.4);
   }
@@ -51,28 +51,7 @@
   .desk .blob { position: absolute; border-radius: 50%; filter: blur(40px); opacity: .7; }
   .dock-slot { position: absolute; inset: 0; display: flex; justify-content: center; align-items: flex-end; padding: 18px; z-index: 1; }
   .dock-slot .dock { margin-bottom: 4px; }
-  .desk .panel {
-    position: absolute; z-index: 1; width: 290px; padding: 18px; border-radius: 18px; text-align: left;
-    background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,0) 40%), rgba(26, 26, 32, .72);
-    backdrop-filter: blur(30px) saturate(1.4); -webkit-backdrop-filter: blur(30px) saturate(1.4);
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,.12), 0 20px 50px rgba(0,0,0,.35);
-    font-size: 13px;
-  }
-  .cal-h { display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 15px; margin-bottom: 10px; }
-  .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; font-variant-numeric: tabular-nums; }
-  .cal b { font-weight: 600; font-size: 11px; color: var(--ink3); padding: 4px 0; }
-  .cal span { padding: 5px 0; border-radius: 50%; aspect-ratio: 1; display: grid; place-items: center; font-size: 12.5px; }
-  .cal span.dim { color: var(--ink3); }
-  .cal span.today { background: var(--red); font-weight: 700; }
-  .cal span.ev::after { content: ""; display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); position: absolute; margin-top: 18px; }
-  .cal span { position: relative; }
-  .next { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); display: flex; gap: 10px; align-items: center; }
-  .next i { width: 3px; align-self: stretch; border-radius: 3px; background: var(--accent); }
-  .next strong { display: block; font-size: 14px; }
-  .next em { font-style: normal; color: var(--ink2); }
-  .next .when { margin-left: auto; font: 600 22px/1 var(--display); letter-spacing: -.02em; }
-  @media (max-width: 900px) { .desk .panel { display: none; } }
-  @media (max-width: 760px) { .desk { aspect-ratio: auto; min-height: 0; height: 230px; border-radius: 20px; } .dock [data-opt] { display: none !important; } }
+    @media (max-width: 760px) { .desk { aspect-ratio: auto; min-height: 0; height: 540px; border-radius: 20px; } .dock [data-opt] { display: none !important; } }
 
   .facts { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 34px; margin-top: 34px; color: var(--ink2); font-size: 15px; }
   .facts b { color: var(--ink); font-weight: 600; }
@@ -189,6 +168,18 @@
   @keyframes pixin { 0% { opacity: 0; transform: translateY(16px) scale(.97) } 8%, 82% { opacity: 1; transform: none } 92%, 100% { opacity: 0; transform: translateY(-8px) } }
   @media (max-width: 860px) { .refer { grid-template-columns: 1fr; } }
 
+  /* ---------- garantia */
+  .refund { display: grid; grid-template-columns: auto 1fr; gap: clamp(24px, 5vw, 64px); align-items: center; padding: clamp(28px, 5vw, 56px); border-radius: 32px;
+    background: radial-gradient(60% 100% at 0% 50%, rgba(48,209,88,.16), transparent 70%), rgba(255,255,255,.035); box-shadow: inset 0 0 0 1px rgba(255,255,255,.09); }
+  .refund-n { width: clamp(130px, 18vw, 200px); aspect-ratio: 1; border-radius: 36%; display: grid; place-items: center; align-content: center;
+    background: linear-gradient(160deg, #3ddc6e, #12994a); box-shadow: 0 20px 60px rgba(48,209,88,.3), inset 0 1px 0 rgba(255,255,255,.35); }
+  .refund-n b { font: 800 clamp(64px, 9vw, 104px)/.9 var(--display); letter-spacing: -.05em; }
+  .refund-n span { font: 600 clamp(15px, 1.8vw, 20px) var(--display); opacity: .9; }
+  .refund h2 { font-size: clamp(30px, 4vw, 48px); }
+  .refund .lead { margin: 16px 0 26px; max-width: 46ch; }
+  .refund .btn { font-size: 16px; }
+  @media (max-width: 700px) { .refund { grid-template-columns: 1fr; justify-items: start; } .refund .btn { white-space: normal; height: auto; padding: 14px 18px; } }
+
   /* ---------- preço */
   .price-card { max-width: 520px; margin: 0 auto; padding: 36px; border-radius: 30px; text-align: center; position: relative; }
   .price-card::before { content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; background: linear-gradient(160deg, rgba(90,184,255,.8), rgba(94,59,238,.4) 40%, rgba(255,107,139,.6)); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; }
@@ -217,7 +208,7 @@
     <h1 class="rv">Tudo que você sempre quis na barra de tarefas do Windows</h1>
     <p class="lead rv">Tipo a dock do Mac, só que melhor</p>
     <div class="hero-cta rv">
-      <button class="btn btn-primary btn-lg" data-buy>Comprar por R$ 8,90</button>
+      <button class="btn btn-primary btn-lg" data-buy>Comprar por R$ 11,90</button>
       <a class="btn btn-glass btn-lg" href="#widgets">Ver os 26 widgets</a>
     </div>
     <div class="hero-meta rv"><span>Pagamento único</span><span>Windows 10 e 11</span><span>Sem instalação</span></div>
@@ -225,18 +216,6 @@
   </div>
 
   <div class="desk rv" id="desk">
-    <div class="panel" style="left:4%;top:8%">
-      <div class="cal-h"><span id="calTitle"></span><span class="muted" style="font-weight:400;font-size:13px">Agenda</span></div>
-      <div class="cal" id="cal"></div>
-      <div class="next"><i></i><div><strong>Revisão do projeto</strong><em>Sala 2 · Meet</em></div><span class="when">em 25 min</span></div>
-    </div>
-    <div class="panel" style="right:4%;top:10%;width:250px">
-      <div class="cal-h"><span>Pomodoro</span><span class="muted" style="font-weight:400;font-size:13px">3 sessões hoje</span></div>
-      <div style="display:grid;place-items:center;padding:6px 0 4px">
-        <svg viewBox="0 0 120 120" width="132" height="132"><circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="7"/><circle id="pomoRing" cx="60" cy="60" r="50" fill="none" stroke="#FF453A" stroke-width="7" stroke-linecap="round" stroke-dasharray="314.2" stroke-dashoffset="100" transform="rotate(-90 60 60)"/><text id="pomoTxt" x="60" y="68" text-anchor="middle" fill="#fff" font-size="24" font-weight="600" font-family="Segoe UI Variable Display, Inter Tight, sans-serif">16:40</text></svg>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:8px"><span style="flex:1;text-align:center;padding:8px;border-radius:10px;background:#0A84FF;font-weight:600">Pausar</span><span style="flex:1;text-align:center;padding:8px;border-radius:10px;background:rgba(255,255,255,.1)">Pular</span></div>
-    </div>
     <div class="dock-slot"><div id="heroDock"></div></div>
   </div>
 
@@ -349,14 +328,14 @@
     <div class="refer rv">
       <div>
         <h2>Indique e fique com metade de cada venda</h2>
-        <p>Cada pessoa que comprar pelo seu link deixa R$ 4,45 no seu PIX. Sem limite de indicações e sem precisar ter comprado</p>
+        <p>Cada pessoa que comprar pelo seu link deixa R$ 5,95 no seu PIX. Sem limite de indicações e sem precisar ter comprado</p>
         <a class="btn btn-lg" href="/indique">Criar meu link</a>
       </div>
       <div class="pix-stack" aria-hidden="true">
-        <div class="pix"><span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l4 4-4 4-4-4zM6 8l4 4-4 4-4-4zM18 8l4 4-4 4-4-4zM12 14l4 4-4 4-4-4z"/></svg></span><div><b>PIX recebido</b><small>Comissão GlassDock</small></div><span class="v">+R$ 4,45</span></div>
-        <div class="pix"><span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l4 4-4 4-4-4zM6 8l4 4-4 4-4-4zM18 8l4 4-4 4-4-4zM12 14l4 4-4 4-4-4z"/></svg></span><div><b>PIX recebido</b><small>Comissão GlassDock</small></div><span class="v">+R$ 8,90</span></div>
-        <div class="pix"><span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l4 4-4 4-4-4zM6 8l4 4-4 4-4-4zM18 8l4 4-4 4-4-4zM12 14l4 4-4 4-4-4z"/></svg></span><div><b>PIX recebido</b><small>Comissão GlassDock</small></div><span class="v">+R$ 22,25</span></div>
-        <div class="pix"><span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l4 4-4 4-4-4zM6 8l4 4-4 4-4-4zM18 8l4 4-4 4-4-4zM12 14l4 4-4 4-4-4z"/></svg></span><div><b>PIX recebido</b><small>Comissão GlassDock</small></div><span class="v">+R$ 44,50</span></div>
+        <div class="pix"><span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l4 4-4 4-4-4zM6 8l4 4-4 4-4-4zM18 8l4 4-4 4-4-4zM12 14l4 4-4 4-4-4z"/></svg></span><div><b>PIX recebido</b><small>Comissão GlassDock</small></div><span class="v">+R$ 5,95</span></div>
+        <div class="pix"><span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l4 4-4 4-4-4zM6 8l4 4-4 4-4-4zM18 8l4 4-4 4-4-4zM12 14l4 4-4 4-4-4z"/></svg></span><div><b>PIX recebido</b><small>Comissão GlassDock</small></div><span class="v">+R$ 11,90</span></div>
+        <div class="pix"><span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l4 4-4 4-4-4zM6 8l4 4-4 4-4-4zM18 8l4 4-4 4-4-4zM12 14l4 4-4 4-4-4z"/></svg></span><div><b>PIX recebido</b><small>Comissão GlassDock</small></div><span class="v">+R$ 29,75</span></div>
+        <div class="pix"><span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l4 4-4 4-4-4zM6 8l4 4-4 4-4-4zM18 8l4 4-4 4-4-4zM12 14l4 4-4 4-4-4z"/></svg></span><div><b>PIX recebido</b><small>Comissão GlassDock</small></div><span class="v">+R$ 59,50</span></div>
       </div>
     </div>
   </div>
@@ -371,18 +350,32 @@
     </div>
     <div class="card price-card rv">
       <div class="muted">GlassDock para Windows 10 e 11</div>
-      <div class="amt"><sup>R$</sup>8,90</div>
+      <div class="amt"><sup>R$</sup>11,90</div>
       <div class="muted">pagamento único</div>
       <ul>
         <li>Os 26 widgets, em todos os estilos</li>
         <li>Workspaces, pilhas, mascotes e todos os ajustes</li>
         <li>Download na hora, com o link também no seu e-mail</li>
         <li>Baixe de novo quando quiser, inclusive as versões novas</li>
-        <li>Reembolso em até 7 dias se não curtir</li>
+        <li>7 dias para pedir o dinheiro de volta</li>
       </ul>
-      <button class="btn btn-primary btn-lg" data-buy>Comprar por R$ 8,90</button>
+      <button class="btn btn-primary btn-lg" data-buy>Comprar por R$ 11,90</button>
       <div class="small">Pagamento por PIX, processado pelo Mercado Pago, sem sair do site</div>
       <div class="ref-pill"><span class="av" data-ref-initial></span><span>Indicação de <b data-ref-first></b></span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================= GARANTIA -->
+<section class="sec" id="garantia" style="padding-top:0">
+  <div class="wrap">
+    <div class="refund rv">
+      <div class="refund-n"><b>7</b><span>dias</span></div>
+      <div>
+        <h2>Não curtiu? Seu dinheiro volta</h2>
+        <p class="lead">Você tem 7 dias depois da compra para pedir o reembolso, sem precisar explicar nada. É só mandar um e-mail e o valor volta pelo PIX para a mesma conta que pagou</p>
+        <a class="btn btn-glass btn-lg" href="mailto:glassdock.app@gmail.com?subject=Reembolso%20do%20GlassDock"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M4 7l8 6 8-6"/></svg>glassdock.app@gmail.com</a>
+      </div>
     </div>
   </div>
 </section>
@@ -398,8 +391,9 @@
       <details><summary>Apareceu uma tela azul do Windows ao abrir</summary><p>É o SmartScreen, que avisa sobre programas sem assinatura digital. Clique em Mais informações e depois em Executar assim mesmo</p></details>
       <details><summary>Meus ícones da bandeja continuam funcionando?</summary><p>Sim. Discord, OneDrive e companhia ficam na dock, e o clique e o botão direito vão direto para o app</p></details>
       <details><summary>Como recebo depois de pagar?</summary><p>Assim que o PIX cai, a página libera o download e o link também chega no seu e-mail. Ele vale por 24 horas. Depois disso, é só pedir um novo em Baixar de novo, com o mesmo e-mail da compra</p></details>
-      <details><summary>É assinatura?</summary><p>Não. Você paga R$ 8,90 uma vez e usa para sempre</p></details>
-      <details><summary>E se eu não gostar?</summary><p>Você tem 7 dias para pedir o dinheiro de volta, sem precisar explicar nada</p></details>
+      <details><summary>É assinatura?</summary><p>Não. Você paga R$ 11,90 uma vez e usa para sempre</p></details>
+      <details><summary>E se eu não gostar?</summary><p>Você tem 7 dias para pedir o dinheiro de volta, sem precisar explicar nada. É só mandar um e-mail para <a href="mailto:glassdock.app@gmail.com" style="color:var(--accent)">glassdock.app@gmail.com</a></p></details>
+      <details><summary>Como falo com vocês?</summary><p>Pelo e-mail <a href="mailto:glassdock.app@gmail.com" style="color:var(--accent)">glassdock.app@gmail.com</a></p></details>
     </div>
   </div>
 </section>
@@ -411,62 +405,16 @@
     <a href="#perguntas">Perguntas</a>
     <a href="#comprar">Comprar</a>
     <a href="/baixar">Baixar de novo</a>
+    <a href="mailto:glassdock.app@gmail.com">glassdock.app@gmail.com</a>
   </div>
 </footer>
 
 <script src="/dock.js"></script>
 <script src="/site.js"></script>
+<script src="/hero.js"></script>
 <script>
 (function () {
-  /* ---------- dock do topo */
-  const heroItems = [
-    { t: 'ws' },
-    { t: 'app', icon: 'start', name: 'Iniciar' },
-    { t: 'app', icon: 'files', name: 'Arquivos', open: true },
-    { t: 'app', icon: 'web', name: 'Navegador', open: true },
-    { t: 'app', icon: 'mail', name: 'E-mail', opt: true },
-    { t: 'app', icon: 'chat', name: 'Mensagens', open: true },
-    { t: 'app', icon: 'code', name: 'Editor de código', opt: true },
-    { t: 'app', icon: 'photos', name: 'Fotos', opt: true },
-    { t: 'app', icon: 'game', name: 'Jogos', opt: true },
-    { t: 'sep' },
-    { t: 'w', w: 'music', opt: true },
-    { t: 'w', w: 'date' },
-    { t: 'w', w: 'weather', opt: true },
-    { t: 'w', w: 'activity' },
-    { t: 'sep', opt: true },
-    { t: 'app', icon: 'downloads', name: 'Downloads', opt: true },
-    { t: 'app', icon: 'trash', name: 'Lixeira', opt: true },
-    { t: 'sep' },
-    { t: 'status' },
-    { t: 'clock' },
-  ];
-  const hero = GD.build(document.getElementById('heroDock'), { items: heroItems, pet: true });
   const desk = document.getElementById('desk');
-  GD.fit(hero, desk, 56, 22);
-
-  /* calendário do painel */
-  const now = new Date();
-  const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-  document.getElementById('calTitle').textContent = `${months[now.getMonth()]} ${now.getFullYear()}`;
-  const first = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
-  const days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  let cal = ['D','S','T','Q','Q','S','S'].map(d => `<b>${d}</b>`).join('');
-  for (let i = 0; i < first; i++) cal += '<span></span>';
-  for (let d = 1; d <= days; d++) {
-    const dow = (first + d - 1) % 7;
-    const cls = d === now.getDate() ? 'today' : (dow === 0 || dow === 6) ? 'dim' : ([3, 12, 18, 24].includes(d) ? 'ev' : '');
-    cal += `<span class="${cls}">${d}</span>`;
-  }
-  document.getElementById('cal').innerHTML = cal;
-
-  /* pomodoro correndo */
-  let left = 16 * 60 + 40;
-  setInterval(() => {
-    left = left > 0 ? left - 1 : 25 * 60;
-    document.getElementById('pomoTxt').textContent = `${String(Math.floor(left / 60)).padStart(2, '0')}:${String(left % 60).padStart(2, '0')}`;
-    document.getElementById('pomoRing').style.strokeDashoffset = 314.2 * (1 - left / 1500);
-  }, 1000);
 
   /* ---------- vitrine dos 26 widgets */
   const pad = n => String(n).padStart(2, '0');

@@ -87,7 +87,7 @@ async function checkout(req, env, db, url) {
   if (ref && (!SLUG_RE.test(ref) || !(await db.one('referrers', `slug=eq.${ref}&select=slug`)))) ref = '';
 
   const id = token(20);
-  const amount = int(env.PRICE_CENTS, 890);
+  const amount = int(env.PRICE_CENTS, 1190);
   await db.insert('orders', { id, ref: ref || null, amount, email });
 
   if (env.FAKE_PAY === '1') {
@@ -281,9 +281,9 @@ async function sendDownloadEmail(env, to, href, origin, idem) {
 <tr><td align="center" style="padding-bottom:24px"><a href="${href}" style="display:inline-block;background:#0A84FF;color:#fff;text-decoration:none;font-weight:600;font-size:16px;padding:14px 28px;border-radius:12px">Baixar GlassDock.exe</a></td></tr>
 <tr><td style="font-size:14px;line-height:1.6;color:#a9a9b5;border-top:1px solid #2a2a33;padding-top:18px">
 Coloque o arquivo numa pasta sua e dê dois cliques. Se o Windows mostrar uma tela azul, clique em <b style="color:#f2f2f5">Mais informações</b> e depois em <b style="color:#f2f2f5">Executar assim mesmo</b><br><br>
-O link expirou? Peça outro em <a href="${again}" style="color:#5AB8FF">${again.replace(/^https?:\/\//, '')}</a> com este mesmo e-mail</td></tr>
+O link expirou? Peça outro em <a href="${again}" style="color:#5AB8FF">${again.replace(/^https?:\/\//, '')}</a> com este mesmo e-mail<br><br>Dúvidas ou reembolso em até 7 dias: <a href="mailto:glassdock.app@gmail.com" style="color:#5AB8FF">glassdock.app@gmail.com</a></td></tr>
 </table></td></tr></table></body></html>`;
-  const text = `Seu GlassDock está pronto\n\nBaixe aqui (vale por ${hours} horas):\n${href}\n\nO link expirou? Peça outro em ${again} com este mesmo e-mail`;
+  const text = `Seu GlassDock está pronto\n\nBaixe aqui (vale por ${hours} horas):\n${href}\n\nO link expirou? Peça outro em ${again} com este mesmo e-mail\n\nDúvidas ou reembolso em até 7 dias: glassdock.app@gmail.com`;
   const subject = 'Seu link para baixar o GlassDock';
 
   // Sem domínio próprio: Gmail com senha de app (SMTP, porta 465)

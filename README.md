@@ -59,7 +59,7 @@ No PIX o valor volta para a conta de quem pagou. O reembolso sai do **saldo disp
 
 ## Comissões
 
-- Cada venda pelo link vale 50% para quem indicou (R$ 4,45).
+- Cada venda pelo link vale 50% para quem indicou (R$ 5,95).
 - A comissão espera 7 dias, que é o prazo de arrependimento, e entra no PIX da **primeira segunda-feira depois desses 7 dias**. Exemplo: compra na segunda 9/11, 7 dias em 16/11, PIX na segunda 23/11. Compras de terça 10/11 a domingo 15/11 também caem em 23/11.
 - Não tem valor mínimo.
 - Compra feita com o mesmo e-mail do indicador não gera comissão.
@@ -166,7 +166,7 @@ SUPABASE_SECRET_KEY=sb_secret_... node test/e2e.mjs
 
 | Variável | Padrão | Para quê |
 |---|---|---|
-| `PRICE_CENTS` | 890 | Preço cobrado |
+| `PRICE_CENTS` | 1190 | Preço cobrado |
 | `COMMISSION_PERCENT` | 50 | Comissão do indicador |
 | `HOLD_DAYS` | 7 | Dias de espera antes da segunda-feira de pagamento |
 | `DOWNLOAD_HOURS` | 24 | Validade de cada link de download |

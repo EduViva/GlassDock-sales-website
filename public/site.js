@@ -41,7 +41,7 @@
         <form class="buy-card" novalidate>
           <button type="button" class="buy-x" aria-label="Fechar">×</button>
           <img src="/icon.svg" alt="" width="52" height="52">
-          <h2>GlassDock por R$ 8,90</h2>
+          <h2>GlassDock por R$ 11,90</h2>
           <p class="muted">Pagamento único por PIX. O download libera assim que o PIX cair</p>
           <label class="field"><span>Seu e-mail</span><input class="input" type="email" name="email" autocomplete="email" required placeholder="voce@email.com"></label>
           <div class="buy-err" role="alert"></div>

@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Indique o GlassDock e ganhe 50%</title>
-<meta name="description" content="Crie o seu link e ganhe R$ 4,45 no PIX por cada venda do GlassDock. Sem limite e sem precisar ter comprado">
+<meta name="description" content="Crie o seu link e ganhe R$ 5,95 no PIX por cada venda do GlassDock. Sem limite e sem precisar ter comprado">
 <meta property="og:title" content="Indique o GlassDock e fique com metade de cada venda">
-<meta property="og:description" content="R$ 4,45 no seu PIX por venda, sem limite">
+<meta property="og:description" content="R$ 5,95 no seu PIX por venda, sem limite">
 <meta name="theme-color" content="#07070b">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -138,7 +138,7 @@
     <div>
       <h1 class="rv">Indique o GlassDock e fique com metade</h1>
       <p class="lead rv">Cada pessoa que comprar pelo seu link deixa metade do valor no seu PIX</p>
-      <div class="money rv">R$ 4,45<small>por venda</small></div>
+      <div class="money rv">R$ 5,95<small>por venda</small></div>
       <p class="rv">Sem limite de indicações e sem precisar ter comprado</p>
       <div class="chips rv"><span><b>50%</b> de comissão</span><span>PIX <b>toda segunda</b></span><span>Link curto com <b>o seu nome</b></span></div>
     </div>
@@ -195,7 +195,7 @@
           <button data-n="5">Família</button><button data-n="30">Grupo da faculdade</button><button data-n="80">Servidor do Discord</button><button data-n="300">Seus seguidores</button>
         </div>
       </div>
-      <div class="card result"><b id="cV">R$ 89,00</b><span>direto no seu PIX</span></div>
+      <div class="card result"><b id="cV">R$ 119,00</b><span>direto no seu PIX</span></div>
     </div>
   </div>
 </section>
@@ -231,7 +231,7 @@
       <details><summary>Tem limite de indicações?</summary><p>Nenhum. Quanto mais gente comprar pelo seu link, mais você recebe</p></details>
       <details><summary>Posso comprar pelo meu próprio link?</summary><p>Pode, mas compra feita com o mesmo e-mail do seu cadastro não gera comissão</p></details>
       <details><summary>E se a pessoa pedir o dinheiro de volta?</summary><p>A comissão daquela venda é cancelada. Por isso a espera de 7 dias antes de liberar</p></details>
-      <details><summary>Posso trocar a minha chave PIX?</summary><p>Fale com a gente pelo e-mail de suporte que a gente troca</p></details>
+      <details><summary>Posso trocar a minha chave PIX?</summary><p>Mande um e-mail para <a href="mailto:glassdock.app@gmail.com" style="color:var(--accent)">glassdock.app@gmail.com</a> com o e-mail do cadastro e a chave nova</p></details>
     </div>
   </div>
 </section>
@@ -241,6 +241,7 @@
     <a class="brand" href="/"><img src="/icon.svg" alt="" width="24" height="24">GlassDock</a>
     <a href="/">Página inicial</a>
     <a href="#regras">Regras</a>
+    <a href="mailto:glassdock.app@gmail.com">glassdock.app@gmail.com</a>
   </div>
 </footer>
 
@@ -255,8 +256,8 @@
 
   /* ---------- mensagens prontas */
   const MSGS = [
-    ['Para o grupo', 'Achei um app que troca a barra de tarefas do Windows por uma dock tipo a do Mac, com widget de clima, música, pomodoro e até um gatinho andando em cima. Custa R$ 8,90 uma vez só'],
-    ['Para stories ou X', 'Minha barra de tarefas agora tem clima, música tocando e um gato passeando. R$ 8,90 e é seu'],
+    ['Para o grupo', 'Achei um app que troca a barra de tarefas do Windows por uma dock tipo a do Mac, com widget de clima, música, pomodoro e até um gatinho andando em cima. Custa R$ 11,90 uma vez só'],
+    ['Para stories ou X', 'Minha barra de tarefas agora tem clima, música tocando e um gato passeando. R$ 11,90 e é seu'],
     ['Para quem programa', 'Pra quem usa Claude Code, Codex ou OpenCode: tem uma dock pro Windows que mostra o seu limite de uso ao vivo, junto com CPU, rede e pomodoro'],
   ];
   const linkText = () => (me ? `${host}/${me.slug}` : `${host}/seunome`);
@@ -274,7 +275,7 @@
   });
 
   /* ---------- calculadora */
-  const calc = (n) => { $('cN').textContent = n; $('cV').textContent = brl(n * 445); };
+  const calc = (n) => { $('cN').textContent = n; $('cV').textContent = brl(n * 595); };
   $('cRange').addEventListener('input', (e) => calc(+e.target.value));
   document.querySelectorAll('.presets button').forEach((b) => b.addEventListener('click', () => { $('cRange').value = b.dataset.n; calc(+b.dataset.n); }));
   calc(20);

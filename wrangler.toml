@@ -13,7 +13,7 @@ html_handling = "drop-trailing-slash"
 
 [vars]
 SUPABASE_URL = "https://hzqpfxpvsaezixlxtkab.supabase.co"
-PRICE_CENTS = "890"
+PRICE_CENTS = "1190"
 COMMISSION_PERCENT = "50"
 # dias de espera antes de a comissão entrar na fila da segunda-feira (prazo de arrependimento)
 HOLD_DAYS = "7"
