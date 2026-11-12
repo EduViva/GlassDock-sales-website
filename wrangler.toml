@@ -11,7 +11,13 @@ binding = "ASSETS"
 run_worker_first = true
 html_handling = "drop-trailing-slash"
 
+# E-mails do 3º e do 12º dia depois da compra: todo dia às 10h07 de Brasília (13h07 UTC)
+[triggers]
+crons = ["7 13 * * *"]
+
 [vars]
+# endereço público do site, usado nos links dos e-mails da rotina diária
+SITE_URL = "https://glassdock.eduardovivaa.workers.dev"
 SUPABASE_URL = "https://hzqpfxpvsaezixlxtkab.supabase.co"
 PRICE_CENTS = "1190"
 COMMISSION_PERCENT = "50"

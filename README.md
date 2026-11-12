@@ -47,6 +47,16 @@ O Gmail manda até cerca de 500 e-mails por dia.
 
 **Com domínio próprio (Resend):** verifique o domínio no Resend e adicione `RESEND_API_KEY` e `EMAIL_FROM` (ex.: `GlassDock <download@seudominio.com.br>`). Se os dois estiverem configurados, o Gmail tem prioridade: apague `GMAIL_USER` para passar a usar o Resend.
 
+## E-mails de indicação (3º e 12º dia)
+
+Todo dia às 10h07 de Brasília (cron do Worker, em `wrangler.toml`), quem comprou há 3 dias recebe "Curtiu o GlassDock?", com três dicas e o convite para indicar, e quem comprou há 12 dias recebe "2 amigos e o seu GlassDock sai de graça", com uma mensagem pronta para mandar.
+
+- Só para pedidos pagos e não reembolsados, um e-mail por pessoa, nunca repetido. Se a rotina falhar num dia, ela pega o atraso nos 5 dias seguintes.
+- Se o cliente já tem link de indicação (mesmo e-mail), o e-mail mostra o link dele.
+- Todo e-mail tem "Não quero mais receber esses e-mails" (`/parar?pedido=…`).
+- No `/admin`: **Mandar prévia dos dois** envia as duas versões para o endereço que você digitar, e **Rodar a rotina agora** dispara a rotina na hora.
+- Os links dos e-mails usam `SITE_URL` do `wrangler.toml`. Troque quando tiver domínio próprio.
+
 ## Reembolso
 
 No `/admin`, cada pedido pago tem **Reembolsar**. O servidor:

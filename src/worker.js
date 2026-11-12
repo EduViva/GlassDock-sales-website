@@ -13,6 +13,10 @@ const RESERVED = new Set([
 const PIX_TYPES = ['CPF', 'CNPJ', 'PHONE', 'EMAIL', 'RANDOM'];
 
 export default {
+  // todo dia às 10h (Brasília): e-mails do 3º e do 12º dia depois da compra
+  async scheduled(_ev, env, ctx) {
+    ctx.waitUntil(runNudges(env).then((r) => console.log('nudges', JSON.stringify(r))));
+  },
   async fetch(req, env, ctx) {
     try {
       return await route(req, env, ctx);
@@ -40,6 +44,9 @@ async function route(req, env, ctx) {
   if (p === '/api/admin/reembolsar' && m === 'POST') return adminRefund(req, env, db, url);
   if (p === '/api/admin/reenviar' && m === 'POST') return adminResend(req, env, db, url);
   if (p === '/api/reenviar' && m === 'POST') return resendDownload(req, env, db, url);
+  if (p === '/api/admin/previa' && m === 'POST') return adminPreview(req, env, db, url);
+  if (p === '/api/admin/lembretes' && m === 'POST') return adminRunNudges(env, url);
+  if (p === '/parar' && m === 'GET') return unsubscribe(env, db, url);
   if (p === '/api/dev/pagar' && env.FAKE_PAY === '1') return devPay(env, db, url);
   if (p.startsWith('/baixar/')) return download(env, db, p.slice(8), url, ctx);
   if (p.startsWith('/api/')) return json({ error: 'Não encontrado' }, 404);
@@ -284,9 +291,12 @@ Coloque o arquivo numa pasta sua e dê dois cliques. Se o Windows mostrar uma te
 O link expirou? Peça outro em <a href="${again}" style="color:#5AB8FF">${again.replace(/^https?:\/\//, '')}</a> com este mesmo e-mail<br><br>Dúvidas ou reembolso em até 7 dias: <a href="mailto:glassdock.app@gmail.com" style="color:#5AB8FF">glassdock.app@gmail.com</a></td></tr>
 </table></td></tr></table></body></html>`;
   const text = `Seu GlassDock está pronto\n\nBaixe aqui (vale por ${hours} horas):\n${href}\n\nO link expirou? Peça outro em ${again} com este mesmo e-mail\n\nDúvidas ou reembolso em até 7 dias: glassdock.app@gmail.com`;
-  const subject = 'Seu link para baixar o GlassDock';
+  return sendMail(env, { to, subject: 'Seu link para baixar o GlassDock', html, text, idem: `dl-${idem}` });
+}
 
-  // Sem domínio próprio: Gmail com senha de app (SMTP, porta 465)
+// Envia um e-mail: Gmail com senha de app (sem domínio próprio) ou Resend (com domínio verificado)
+async function sendMail(env, { to, subject, html, text, idem }) {
+  if (!emailConfigured(env)) { console.warn('e-mail não configurado (GMAIL_USER + GMAIL_APP_PASSWORD, ou RESEND_API_KEY + EMAIL_FROM)'); return false; }
   if (env.GMAIL_USER && env.GMAIL_APP_PASSWORD) {
     let mailer;
     try {
@@ -304,11 +314,9 @@ O link expirou? Peça outro em <a href="${again}" style="color:#5AB8FF">${again.
       try { await mailer?.close(); } catch {}
     }
   }
-
-  // Com domínio próprio verificado: Resend
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
-    headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json', 'Idempotency-Key': `dl-${idem}` },
+    headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json', ...(idem ? { 'Idempotency-Key': idem } : {}) },
     body: JSON.stringify({ from: env.EMAIL_FROM, to: [to], subject, html, text }),
   });
   if (!res.ok) console.error('resend', res.status, await res.text().catch(() => ''));
@@ -528,6 +536,116 @@ async function adminResend(req, env, db, url) {
   return json({ ok: true, emailed: emailConfigured(env), link: `${url.origin}/baixar/${link.token}` });
 }
 
+/* ------------------------------------------------------------------ e-mails do 3º e do 12º dia */
+
+const esc = (t) => String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const brlFmt = (c) => (c / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+function siteOrigin(env, url) {
+  return (env.SITE_URL || (url ? url.origin : '')).replace(/\/+$/, '');
+}
+
+// Monta os dois e-mails de indicação. ref = indicador já cadastrado com o mesmo e-mail (ou null)
+function nudgeEmail(env, origin, day, orderId, ref) {
+  const price = int(env.PRICE_CENTS, 1190);
+  const per = Math.floor((price * int(env.COMMISSION_PERCENT, 50)) / 100);
+  const free = Math.ceil(price / per);
+  const link = ref ? `${origin}/${ref.slug}` : null;
+  const stop = orderId ? `${origin}/parar?pedido=${orderId}` : `${origin}/`;
+  const btn = (href, label) => `<a href="${href}" style="display:inline-block;background:#0A84FF;color:#fff;text-decoration:none;font-weight:600;font-size:16px;padding:14px 28px;border-radius:12px">${label}</a>`;
+  const p = (t) => `<p style="margin:0 0 14px;font-size:15px;line-height:1.6;color:#c9c9d3">${t}</p>`;
+  const li = (t, d) => `<tr><td style="padding:10px 12px;border-radius:12px;background:#1f1f27;font-size:14px;line-height:1.5;color:#c9c9d3"><b style="color:#f2f2f5">${t}</b><br>${d}</td></tr><tr><td style="height:8px"></td></tr>`;
+  const refBox = link
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:6px 0 18px"><tr><td style="padding:14px 16px;border-radius:14px;background:#0f2a4d;border:1px solid #1d5fb0;font-size:15px;color:#f2f2f5">Seu link: <a href="${link}" style="color:#7cc3ff;font-weight:700;text-decoration:none">${esc(link.replace(/^https?:\/\//, ''))}</a></td></tr></table>`
+    : '';
+
+  let subject, title, body, cta, text;
+  if (day === 3) {
+    subject = 'Curtiu o GlassDock?';
+    title = 'E aí, curtiu o GlassDock?';
+    body = p('Faz 3 dias que a dock nova chegou. Três coisas que quase todo mundo descobre depois e se arrepende de não ter visto antes:')
+      + `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:4px 0 14px">${li('Pilhas de widgets', 'Arraste um widget em cima de outro e troque entre eles com a roda do mouse')}${li('Workspaces', 'Ctrl + Alt + 1 a 9 troca de ambiente, cada um com seus apps, widgets e janelas')}${li('Mascote', 'Adicione um bichinho que anda em cima da dock conforme o PC trabalha')}</table>`
+      + p(`Se você está gostando, mostre para alguém. Cada pessoa que comprar pelo seu link deixa <b style="color:#f2f2f5">${brlFmt(per)}</b> no seu PIX, e com <b style="color:#f2f2f5">${free} indicações o seu GlassDock sai de graça</b>`)
+      + refBox;
+    cta = link ? btn(`${origin}/indique`, 'Ver meu painel') : btn(`${origin}/indique`, 'Criar meu link');
+    text = `E aí, curtiu o GlassDock?\n\nTrês dicas: pilhas de widgets (arraste um widget em cima de outro), workspaces (Ctrl + Alt + 1 a 9) e o mascote.\n\nSe está gostando, indique: cada compra pelo seu link deixa ${brlFmt(per)} no seu PIX, e com ${free} indicações o seu GlassDock sai de graça.\n${link ? 'Seu link: ' + link : 'Crie o seu link: ' + origin + '/indique'}`;
+  } else {
+    subject = `${free} amigos e o seu GlassDock sai de graça`;
+    title = `${free} amigos e o seu GlassDock sai de graça`;
+    const msg = `Achei um app que troca a barra de tarefas do Windows por uma dock tipo a do Mac, com clima, música e agenda. ${link || origin}`;
+    body = p('Já são 12 dias com a dock nova. Se ela deixou o seu computador mais gostoso de usar, tem alguém do seu lado reclamando da barra do Windows agora mesmo')
+      + p(`Cada compra pelo seu link vale <b style="color:#f2f2f5">${brlFmt(per)}</b>, metade do valor, direto no seu PIX toda segunda. Sem limite e sem valor mínimo`)
+      + refBox
+      + `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px"><tr><td style="padding:14px 16px;border-radius:14px 14px 14px 4px;background:#1f2c34;font-size:14px;line-height:1.5;color:#e9edef">${esc(msg)}</td></tr><tr><td style="font-size:12px;color:#8a8a96;padding-top:6px">Mensagem pronta: é só copiar e mandar no grupo</td></tr></table>`;
+    cta = link ? btn(`https://wa.me/?text=${encodeURIComponent(msg)}`, 'Mandar no WhatsApp') : btn(`${origin}/indique`, 'Criar meu link');
+    text = `${title}\n\nCada compra pelo seu link vale ${brlFmt(per)}, direto no seu PIX toda segunda.\n${link ? 'Seu link: ' + link : 'Crie o seu link: ' + origin + '/indique'}\n\nMensagem pronta:\n${msg}`;
+  }
+  text += `\n\nNão quer mais esses e-mails? ${stop}\nDúvidas: glassdock.app@gmail.com`;
+  const html = `<!doctype html><html lang="pt-BR"><body style="margin:0;background:#0b0b10;font-family:Segoe UI,Arial,sans-serif;color:#f2f2f5">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0b0b10;padding:32px 16px"><tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:500px;background:#17171d;border-radius:20px;border:1px solid #2a2a33;padding:32px">
+<tr><td align="center" style="padding-bottom:10px"><img src="${origin}/icon.png" width="56" height="56" alt="" style="border-radius:14px"></td></tr>
+<tr><td align="center" style="font-size:24px;font-weight:700;line-height:1.25;padding:6px 0 20px">${esc(title)}</td></tr>
+<tr><td>${body}</td></tr>
+<tr><td align="center" style="padding:6px 0 22px">${cta}</td></tr>
+<tr><td style="font-size:12.5px;line-height:1.6;color:#8a8a96;border-top:1px solid #2a2a33;padding-top:16px">Dúvidas: <a href="mailto:glassdock.app@gmail.com" style="color:#5AB8FF">glassdock.app@gmail.com</a><br><a href="${stop}" style="color:#8a8a96">Não quero mais receber esses e-mails</a></td></tr>
+</table></td></tr></table></body></html>`;
+  return { subject, html, text };
+}
+
+async function runNudges(env) {
+  const db = supabase(env), origin = siteOrigin(env);
+  const out = { day3: 0, day12: 0, failed: 0 };
+  if (!origin) { console.error('SITE_URL não configurado'); return out; }
+  for (const day of [3, 12]) {
+    const col = day === 3 ? 'nudge3_at' : 'nudge12_at';
+    const { data } = await db.rpc('gd_nudge_due', { p_day: day });
+    const seen = new Set();
+    for (const o of data || []) {
+      const email = (o.email || '').toLowerCase();
+      // marca antes de mandar: se a rotina rodar duas vezes, ninguém recebe dois e-mails
+      const mark = await db.call('PATCH', `orders?id=eq.${o.id}&${col}=is.null`, { [col]: new Date().toISOString() }, 'return=representation');
+      if (!mark.ok || !mark.data?.length) continue;
+      if (seen.has(email)) continue; // várias compras do mesmo e-mail: um e-mail só
+      seen.add(email);
+      const ref = await db.one('referrers', `email=eq.${encodeURIComponent(email)}&select=slug`);
+      const m = nudgeEmail(env, origin, day, o.id, ref);
+      const ok = await sendMail(env, { to: o.email, ...m, idem: `n${day}-${o.id}` });
+      if (ok) out[`day${day}`]++;
+      else { out.failed++; await db.call('PATCH', `orders?id=eq.${o.id}`, { [col]: null }, 'return=minimal'); }
+    }
+  }
+  return out;
+}
+
+async function unsubscribe(env, db, url) {
+  const id = url.searchParams.get('pedido') || '';
+  if (/^[A-Za-z0-9]{20}$/.test(id)) await db.rpc('gd_unsubscribe', { p_order: id });
+  return new Response(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Pronto</title><link rel="stylesheet" href="/style.css"></head>
+<body><main style="min-height:100vh;display:grid;place-items:center;padding:24px;text-align:center"><div style="max-width:440px"><img src="/icon.svg" width="64" height="64" alt="" style="margin:0 auto 22px"><h1 style="font-size:40px">Pronto</h1>
+<p class="lead" style="margin-top:12px">Você não vai mais receber os e-mails de dicas e indicação. Os links de download continuam chegando normalmente quando você pedir</p>
+<p style="margin-top:24px"><a class="btn btn-glass" href="/">Voltar para o site</a></p></div></main></body></html>`, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
+}
+
+// Admin: manda as duas versões do e-mail para um endereço, para você ver como chegam
+async function adminPreview(req, env, db, url) {
+  if (!isAdmin(env, url)) return json({ error: 'Unauthorized' }, 401);
+  const b = await req.json().catch(() => ({}));
+  const to = String(b.email || '').trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return json({ error: 'E-mail inválido' }, 400);
+  const origin = siteOrigin(env, url);
+  const ref = await db.one('referrers', `email=eq.${encodeURIComponent(to.toLowerCase())}&select=slug`);
+  const r3 = await sendMail(env, { to, ...nudgeEmail(env, origin, 3, null, ref) });
+  const r12 = await sendMail(env, { to, ...nudgeEmail(env, origin, 12, null, ref) });
+  return json({ ok: r3 && r12, day3: r3, day12: r12 });
+}
+
+// Admin: roda agora a rotina diária (ela já roda sozinha às 10h)
+async function adminRunNudges(env, url) {
+  if (!isAdmin(env, url)) return json({ error: 'Unauthorized' }, 401);
+  return json(await runNudges(env));
+}
+
 /* ------------------------------------------------------------------ Supabase (REST) */
 
 function sbHeaders(env) {
@@ -568,6 +686,7 @@ function supabase(env) {
       return r;
     },
     rpc: (fn, args) => call('POST', `rpc/${fn}`, args),
+    call,
   };
 }
 

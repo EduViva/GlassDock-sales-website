@@ -45,6 +45,14 @@
   </div>
   <div class="kpis" id="kpis"></div>
 
+  <h2>E-mails de indicação</h2>
+  <p class="sub">Todo dia às 10h, quem comprou há 3 dias recebe "Curtiu o GlassDock?" e quem comprou há 12 dias recebe o convite para indicar. Mande uma prévia para ver como chegam</p>
+  <div class="row" style="margin-bottom:8px">
+    <input class="input" id="pvEmail" type="email" placeholder="seu e-mail" style="width:280px">
+    <button class="btn btn-glass btn-sm" id="pvSend">Mandar prévia dos dois</button>
+    <button class="btn btn-glass btn-sm" id="pvRun">Rodar a rotina agora</button>
+  </div>
+
   <h2>PIX desta semana</h2>
   <p class="sub">Comissões que completaram 7 dias sem reembolso. Mande o PIX pelo app do banco ou do Mercado Pago e clique em Paguei</p>
   <div class="due" id="due"></div>
@@ -129,6 +137,16 @@ document.addEventListener('click', async (e) => {
   toast(r.ok ? 'Registrado' : d.error || 'Falhou', 3000);
   load();
 });
+$('pvSend').onclick = async () => {
+  const r = await fetch('/api/admin/previa?k=' + k(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: $('pvEmail').value }) });
+  const d = await r.json();
+  toast(d.ok ? 'Prévias enviadas' : d.error || 'Não deu para enviar. Confira GMAIL_USER e GMAIL_APP_PASSWORD', 4000);
+};
+$('pvRun').onclick = async () => {
+  const r = await fetch('/api/admin/lembretes?k=' + k(), { method: 'POST' });
+  const d = await r.json();
+  toast(d.error || `Dia 3: ${d.day3} · dia 12: ${d.day12}${d.failed ? ' · falhas: ' + d.failed : ''}`, 4000);
+};
 $('load').onclick = load;
 $('key').addEventListener('keydown', (e) => { if (e.key === 'Enter') load(); });
 if ($('key').value) load();
