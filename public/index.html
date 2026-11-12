@@ -36,24 +36,11 @@
   .hero-meta span:first-child::before { display: none; }
   .hero .ref-pill { margin-top: 22px; }
 
-  /* área de trabalho de demonstração */
-  .desk {
-    --wall: radial-gradient(120% 90% at 20% 0%, #3f7fd8 0%, transparent 55%),
-            radial-gradient(110% 80% at 85% 10%, #7a5cf0 0%, transparent 55%),
-            radial-gradient(120% 90% at 60% 100%, #ef8fae 0%, transparent 60%),
-            linear-gradient(180deg, #3b66b3 0%, #8a74c9 55%, #e59bb3 100%);
-    position: relative; margin: clamp(48px, 7vw, 80px) auto 0; width: min(1240px, 100% - 2 * var(--gutter));
-    aspect-ratio: 16 / 8.2; min-height: 520px; border-radius: 28px; overflow: hidden;
-    background: var(--wall);
-    box-shadow: 0 0 0 1px rgba(255,255,255,.08), 0 40px 120px rgba(40, 30, 120, .45), 0 20px 50px rgba(0,0,0,.4);
-  }
-  .desk::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.08'/%3E%3C/svg%3E"); mix-blend-mode: overlay; }
-  .desk .blob { position: absolute; border-radius: 50%; filter: blur(40px); opacity: .7; }
   .dock-slot { position: absolute; inset: 0; display: flex; justify-content: center; align-items: flex-end; padding: 18px; z-index: 1; }
   .dock-slot .dock { margin-bottom: 4px; }
-    @media (max-width: 760px) { .desk { aspect-ratio: auto; min-height: 0; height: 540px; border-radius: 20px; } .dock [data-opt] { display: none !important; } }
+  @media (max-width: 760px) { .dock [data-opt] { display: none !important; } }
 
-  .facts { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 34px; margin-top: 34px; color: var(--ink2); font-size: 15px; }
+  .facts { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 34px; margin-top: 56px; color: var(--ink2); font-size: 15px; }
   .facts b { color: var(--ink); font-weight: 600; }
 
   /* ---------- widgets */
@@ -63,23 +50,68 @@
   .w-head p { grid-column: 2; max-width: 52ch; }
   @media (max-width: 720px) { .w-head { grid-template-columns: 1fr; } .w-head p { grid-column: 1; } }
 
-  .wgrid { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-flow: dense; gap: 14px; }
-  .wcard.wide { grid-column: span 2; }
-  .wcard.wide .wprev { --s: 82px; --gap: 9px; }
-  @media (max-width: 1080px) { .wgrid { grid-template-columns: repeat(3, 1fr); } }
-  @media (max-width: 780px) { .wgrid { grid-template-columns: repeat(2, 1fr); gap: 10px; } .wgrid .wprev { --s: 48px; --gap: 6px; height: 100px; } .wgrid .wcard.wide .wprev { --s: 60px; } .wcard h3 { font-size: 15.5px; } .wcard p { font-size: 13.5px; } }
-  .wcard { padding: 10px 10px 18px; border-radius: 22px; background: rgba(255,255,255,.035); box-shadow: inset 0 0 0 1px rgba(255,255,255,.07); transition: background .25s, transform .25s; }
-  .wcard:hover { background: rgba(255,255,255,.06); transform: translateY(-3px); }
-  .wprev {
-    --s: 66px; --gap: 8px;
-    height: 136px; border-radius: 15px; display: grid; place-items: center; margin-bottom: 14px; overflow: hidden; position: relative;
-    background: radial-gradient(90% 120% at 15% 0%, rgba(90,184,255,.35), transparent 60%), radial-gradient(90% 120% at 100% 100%, rgba(255,107,139,.28), transparent 60%), linear-gradient(160deg, #2b3f78, #5a4a9a 60%, #8d5c8f);
+  .wgrid { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 200px; grid-auto-flow: dense; gap: 14px; }
+  .wb { --g: #5AB8FF; position: relative; overflow: hidden; border-radius: 26px; padding: 18px 20px; display: grid; grid-template-rows: 1fr auto; gap: 12px;
+    background: radial-gradient(120% 90% at 50% -10%, color-mix(in srgb, var(--g) 34%, transparent), transparent 62%), linear-gradient(180deg, #16161d, #101015);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.08), 0 1px 0 rgba(255,255,255,.04); transition: transform .3s cubic-bezier(.2,.8,.2,1), box-shadow .3s; }
+  .wb::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: radial-gradient(60% 50% at 50% 0%, rgba(255,255,255,.07), transparent 70%); }
+  .wb:hover { transform: translateY(-4px); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--g) 45%, rgba(255,255,255,.1)), 0 18px 50px color-mix(in srgb, var(--g) 18%, transparent); }
+  .wb-w { grid-column: span 2; }
+  .wb-t { grid-row: span 2; }
+  .wb-b { grid-column: span 2; grid-row: span 2; padding: 22px 24px; }
+  .wb-prev { --s: 80px; --gap: 10px; display: grid; place-items: center; min-height: 0; }
+  .wb-w .wb-prev { --s: 90px; --gap: 11px; }
+  .wb-t .wb-prev, .wb-b .wb-prev { --s: 78px; --gap: 10px; }
+  .wb h3 { font-size: 16.5px; letter-spacing: -.01em; }
+  .wb p { color: var(--ink2); font-size: 13.5px; line-height: 1.4; margin-top: 3px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .wb-b h3 { font-size: 22px; }
+  .wb-b p { font-size: 15px; }
+  .wb-tag { position: absolute; top: 14px; right: 16px; font-size: 11.5px; font-weight: 600; padding: 3px 9px; border-radius: 99px; color: #fff; background: color-mix(in srgb, var(--g) 30%, rgba(255,255,255,.06)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--g) 40%, transparent); z-index: 1; }
+  /* conteúdo rico dos cards grandes */
+  .wr { width: 100%; height: 100%; display: grid; align-content: center; gap: 12px; }
+  .wr-music { grid-template-columns: 46% 1fr; align-items: center; gap: 20px; }
+  .wr-cover { position: relative; aspect-ratio: 1; border-radius: 18px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,.45); }
+  .wr-cover img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.35); }
+  .wr-cover .hx-eq { display: flex; background: linear-gradient(transparent 55%, rgba(0,0,0,.55)); align-items: flex-end; justify-content: flex-start; padding: 0 0 12px 14px; gap: 3px; }
+  .wr-cover .hx-eq i { width: 4px; animation-name: eq2; }
+  @keyframes eq2 { from { height: 5px; } to { height: 20px; } }
+  .wr-song b { display: block; font: 600 20px/1.2 var(--display); }
+  .wr-song span { color: var(--ink2); }
+  .wr-bar { height: 5px; border-radius: 9px; background: rgba(255,255,255,.14); margin: 16px 0 6px; overflow: hidden; }
+  .wr-bar i { display: block; height: 100%; width: 38%; background: #fff; border-radius: 9px; animation: prog 30s linear infinite; }
+  @keyframes prog { from { width: 20%; } to { width: 92%; } }
+  .wr-times { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink3); }
+  .wr-ctrl { display: flex; align-items: center; gap: 20px; margin-top: 12px; }
+  .wr-ctrl svg { width: 22px; height: 22px; opacity: .85; }
+  .wr-ctrl .main { width: 46px; height: 46px; border-radius: 50%; background: #fff; color: #111; display: grid; place-items: center; }
+  .wr-ctrl .main svg { width: 22px; opacity: 1; }
+  .wr-ev { display: flex; gap: 10px; align-items: center; padding: 9px 12px; border-radius: 12px; background: rgba(255,255,255,.05); }
+  .wr-ev i { width: 3px; align-self: stretch; border-radius: 3px; flex: none; }
+  .wr-ev b { display: block; font-size: 14px; }
+  .wr-ev small { color: var(--ink2); font-size: 12.5px; }
+  .wr-ev .when { margin-left: auto; font: 600 14px var(--display); white-space: nowrap; }
+  .wr-pets { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .wr-pets span { font-size: 12.5px; padding: 4px 10px; border-radius: 99px; background: rgba(255,255,255,.07); color: var(--ink2); }
+  .wr-mini, .ill-pet .mini { display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .wr-mini i, .ill-pet .mini i { width: 30px; height: 30px; border-radius: 8px; }
+  .wr-mini { position: relative; height: 54px; border-radius: 18px; background: rgba(14,14,18,.85); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); margin-top: 40px; }
+  .wr-mini .d-pet { animation-duration: 12s; }
+  .wr-task { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 12px; background: rgba(255,255,255,.05); font-size: 14px; }
+  .wr-task i { width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 1.6px rgba(255,255,255,.55); flex: none; display: grid; place-items: center; }
+  .wr-task.done { color: var(--ink3); text-decoration: line-through; }
+  .wr-task.done i { background: var(--green); box-shadow: none; }
+  .wr-task.done i::after { content: ""; width: 8px; height: 4px; border-left: 2px solid #fff; border-bottom: 2px solid #fff; transform: rotate(-45deg) translate(1px, -1px); }
+  @media (max-width: 1080px) { .wgrid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 620px) {
+    .wgrid { grid-auto-rows: 172px; gap: 10px; }
+    .wb { padding: 14px; border-radius: 22px; }
+    .wb-prev { --s: 58px; --gap: 7px; } .wb-w .wb-prev { --s: 62px; } .wb-t .wb-prev, .wb-b .wb-prev { --s: 58px; }
+    .wb h3 { font-size: 15px; } .wb p { font-size: 12.5px; -webkit-line-clamp: 1; }
+    .wb-b { padding: 16px; } .wb-b h3 { font-size: 18px; } .wb-b p { font-size: 13.5px; }
+    .wr-music { grid-template-columns: 42% 1fr; gap: 14px; } .wr-song b { font-size: 16px; } .wr-ctrl { gap: 14px; } .wr-ctrl .main { width: 40px; height: 40px; }
+    .wr-ev { padding: 7px 10px; } .wr-ev small { display: none; }
+    .wr-mini i:nth-child(n+4) { display: none; } .wr-mini { margin-top: 30px; } .wr-pets { gap: 4px; } .wr-pets span { font-size: 11px; padding: 3px 7px; }
   }
-  .wcard:nth-child(3n+2) .wprev { background: radial-gradient(90% 120% at 85% 0%, rgba(94,59,238,.45), transparent 60%), radial-gradient(80% 120% at 0% 100%, rgba(64,200,224,.3), transparent 60%), linear-gradient(160deg, #23305f, #3d3a85 60%, #6e4f9a); }
-  .wcard:nth-child(3n) .wprev { background: radial-gradient(90% 120% at 50% 0%, rgba(255,159,10,.28), transparent 60%), radial-gradient(90% 120% at 0% 100%, rgba(191,90,242,.32), transparent 60%), linear-gradient(160deg, #2e2b62, #6a4a8e 60%, #b46c8a); }
-  .wcard h3 { font-size: 17px; padding: 0 8px; }
-  .wcard p { padding: 4px 8px 0; color: var(--ink2); font-size: 14.5px; line-height: 1.45; }
-  .wcard .tag { display: inline-block; margin: 10px 8px 0; font-size: 12.5px; color: var(--ink2); padding: 3px 9px; border-radius: 999px; background: rgba(255,255,255,.07); }
 
   /* conteúdo dos tiles */
   .tile .c { position: absolute; inset: 0; display: grid; place-items: center; align-content: center; }
@@ -89,14 +121,14 @@
 
   /* ---------- personalização */
   .studio { display: grid; grid-template-columns: 1fr 330px; gap: 16px; align-items: stretch; }
-  .stage { position: relative; border-radius: 24px; overflow: hidden; min-height: 420px; background: var(--wall); transition: background .5s; box-shadow: 0 0 0 1px rgba(255,255,255,.08), 0 30px 80px rgba(0,0,0,.35); }
+  .stage { --wall: radial-gradient(120% 90% at 20% 0%, #3f7fd8 0%, transparent 55%), radial-gradient(110% 80% at 85% 10%, #7a5cf0 0%, transparent 55%), radial-gradient(120% 90% at 60% 100%, #ef8fae 0%, transparent 60%), linear-gradient(180deg, #3b66b3 0%, #8a74c9 55%, #e59bb3 100%);
+    position: relative; border-radius: 24px; overflow: hidden; min-height: 620px; background: var(--wall); box-shadow: 0 0 0 1px rgba(255,255,255,.08), 0 30px 80px rgba(0,0,0,.35); }
   .stage .dock-slot { padding: 22px; }
   .stage[data-pos="top"] .dock-slot { align-items: flex-start; }
-  .hint-chip { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; gap: 8px; align-items: center; padding: 10px 16px; border-radius: 999px; font-size: 14.5px; background: rgba(20,20,26,.35); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); white-space: nowrap; pointer-events: none; }
-  .stage[data-pos="top"] .hint-chip { top: 60%; }
   .controls { padding: 20px; display: grid; gap: 13px; align-content: start; }
   .ctl { display: grid; gap: 8px; }
   .ctl > span { font-size: 13.5px; color: var(--ink2); }
+  .ctl-note { font-size: 13.5px; color: var(--ink3); padding-top: 4px; border-top: 1px solid var(--line); }
   .seg { display: flex; padding: 3px; border-radius: 12px; background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 1px var(--line); }
   .seg button { flex: 1; height: 32px; border: 0; border-radius: 9px; background: transparent; color: var(--ink2); font-size: 14px; cursor: pointer; transition: background .2s, color .2s; }
   .seg button:hover { color: var(--ink); }
@@ -107,28 +139,119 @@
   .sw button.on::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; box-shadow: 0 0 0 2px var(--accent); }
   .sw button.none { background: repeating-linear-gradient(135deg, transparent 0 5px, rgba(255,255,255,.25) 5px 6px), rgba(255,255,255,.05); }
   input[type=range] { width: 100%; accent-color: var(--accent); }
-  @media (max-width: 900px) { .studio { grid-template-columns: 1fr; } .stage { min-height: 260px; } }
+  @media (max-width: 900px) { .studio { grid-template-columns: 1fr; } .stage { min-height: 560px; } }
 
-  .bento { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 14px; }
-  .bx .ico { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: rgba(255,255,255,.08); box-shadow: inset 0 0 0 1px var(--line); }
-  .bx .ico svg { width: 22px; height: 22px; }
-  .bx { padding: 24px; border-radius: 22px; background: rgba(255,255,255,.04); box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); display: grid; align-content: space-between; gap: 18px; min-height: 180px; position: relative; overflow: hidden; }
-  .bx .n { font: 700 clamp(44px, 5vw, 60px)/1 var(--display); letter-spacing: -.04em; }
-  .bx h3 { font-size: 19px; }
-  .bx p { color: var(--ink2); font-size: 15px; margin-top: 6px; }
+  .bento { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: minmax(250px, auto); grid-auto-flow: dense; gap: 14px; margin-top: 14px; }
+  .bx { --g: #5AB8FF; position: relative; overflow: hidden; padding: 22px; border-radius: 26px; display: grid; grid-template-rows: 1fr auto; gap: 16px;
+    background: radial-gradient(110% 80% at 50% -10%, color-mix(in srgb, var(--g) 26%, transparent), transparent 62%), linear-gradient(180deg, #16161d, #101015);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); transition: transform .3s cubic-bezier(.2,.8,.2,1), box-shadow .3s; }
+  .bx:hover { transform: translateY(-4px); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--g) 45%, rgba(255,255,255,.1)), 0 18px 50px color-mix(in srgb, var(--g) 16%, transparent); }
+  .bx h3 { font-size: 18px; letter-spacing: -.01em; }
+  .bx p { color: var(--ink2); font-size: 14.5px; margin-top: 5px; line-height: 1.45; }
   .bx.wide { grid-column: span 2; }
-  .bx.tall { grid-row: span 2; }
-  .bx.glow::before { content: ""; position: absolute; inset: auto -30% -60% auto; width: 80%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgba(94,59,238,.45), transparent 65%); pointer-events: none; }
-  .bx.glow2::before { content: ""; position: absolute; inset: -50% auto auto -30%; width: 80%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgba(90,184,255,.32), transparent 65%); pointer-events: none; }
+  .bx.tall { grid-row: span 2; grid-template-rows: 1fr auto auto; }
+  .kbd { display: inline-block; padding: 1px 7px; border-radius: 7px; background: rgba(255,255,255,.1); box-shadow: inset 0 -1px 0 rgba(255,255,255,.08), inset 0 0 0 1px var(--line); font-size: 12.5px; }
   .pets { display: flex; gap: 6px; flex-wrap: wrap; }
-  .pets span { padding: 5px 11px; border-radius: 999px; background: rgba(255,255,255,.07); font-size: 13.5px; color: var(--ink2); }
-  .ws-demo { display: flex; gap: 8px; }
-  .ws-demo div { flex: 1; height: 54px; border-radius: 12px; background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 1px var(--line); display: flex; align-items: flex-end; justify-content: center; gap: 4px; padding: 8px; }
-  .ws-demo div.on { background: rgba(10,132,255,.18); box-shadow: inset 0 0 0 1.5px rgba(10,132,255,.7); }
-  .ws-demo i { width: 12px; height: 12px; border-radius: 4px; }
-  .kbd { display: inline-block; padding: 2px 8px; border-radius: 7px; background: rgba(255,255,255,.1); box-shadow: inset 0 -1px 0 rgba(255,255,255,.08), inset 0 0 0 1px var(--line); font-size: 13px; font-family: var(--text); }
+  .pets span { padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.07); font-size: 13px; color: var(--ink2); }
+  .ill { position: relative; display: grid; place-items: center; min-height: 120px; }
+  /* posições */
+  .ill-pos .scr { position: relative; width: 150px; height: 96px; border-radius: 12px; background: linear-gradient(160deg, #3b66b3, #8a74c9 60%, #e59bb3); box-shadow: inset 0 0 0 1px rgba(255,255,255,.15); }
+  .ill-pos .e { position: absolute; border-radius: 5px; background: rgba(14,14,18,.85); box-shadow: inset 0 0 0 1px rgba(255,255,255,.25); opacity: .15; animation: pos 6s infinite; }
+  .ill-pos .b { left: 25%; right: 25%; bottom: 6px; height: 10px; } .ill-pos .t { left: 25%; right: 25%; top: 6px; height: 10px; animation-delay: 1.5s; }
+  .ill-pos .l { top: 22%; bottom: 22%; left: 6px; width: 10px; animation-delay: 3s; } .ill-pos .r { top: 22%; bottom: 22%; right: 6px; width: 10px; animation-delay: 4.5s; }
+  @keyframes pos { 0%, 30% { opacity: 1; } 35%, 100% { opacity: .15; } }
+  /* workspaces */
+  .ill-ws { grid-template-columns: repeat(3, 1fr); gap: 10px; place-items: stretch; align-content: center; }
+  .ill-ws .dsk { position: relative; height: 96px; border-radius: 12px; background: linear-gradient(160deg, #283a6b, #4a3f86); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); opacity: .45; animation: ws 7.5s infinite; }
+  .ill-ws .dsk:nth-child(2) { animation-delay: 2.5s; } .ill-ws .dsk:nth-child(3) { animation-delay: 5s; }
+  .ill-ws .w { position: absolute; border-radius: 5px; opacity: .85; box-shadow: 0 4px 10px rgba(0,0,0,.3); }
+  .ill-ws b { position: absolute; left: 8px; bottom: 6px; font-size: 11.5px; font-weight: 600; }
+  @keyframes ws { 0%, 30% { opacity: 1; transform: translateY(-4px); box-shadow: inset 0 0 0 2px rgba(255,255,255,.6), 0 12px 24px rgba(0,0,0,.3); } 34%, 100% { opacity: .45; transform: none; } }
+  /* estilos */
+  .ill-styles { grid-template-columns: repeat(3, auto); gap: 10px; }
+  .ill-styles span { width: 58px; height: 58px; border-radius: 15px; background: rgba(30,30,36,.95); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); display: grid; place-items: center; }
+  .ill-styles .st1 { transform: rotate(-8deg) translateY(6px); } .ill-styles .st3 { transform: rotate(8deg) translateY(6px); }
+  .ill-styles svg { width: 72%; } .ill-styles .st2 b { font: 700 17px var(--display); color: #30D158; }
+  .ill-styles .st3 { align-content: center; gap: 6px; padding: 0 10px; place-items: stretch; }
+  .ill-styles .st3 i { height: 6px; border-radius: 6px; background: linear-gradient(90deg, #30D158 70%, rgba(255,255,255,.15) 0); }
+  .ill-styles .st3 i + i { background: linear-gradient(90deg, #0A84FF 45%, rgba(255,255,255,.15) 0); }
+  /* mascote */
+  .ill-pet .mini { position: relative; width: 100%; max-width: 260px; height: 46px; border-radius: 16px; background: rgba(14,14,18,.85); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); margin-top: 40px; }
+  .ill-pet .d-pet { animation-duration: 10s; }
+  /* pilhas */
+  .ill-stack span:not(.dots) { position: absolute; width: 72px; height: 72px; border-radius: 18px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.15), 0 8px 20px rgba(0,0,0,.35); }
+  .ill-stack .c3 { background: #2a2a33; transform: translate(14px, -14px) rotate(8deg); }
+  .ill-stack .c2 { background: #1f6f5c; transform: translate(7px, -7px) rotate(4deg); }
+  .ill-stack .c1 { background: linear-gradient(160deg, #3a9bff, #0a5fd0); display: grid; place-items: center; animation: stk 3.2s ease-in-out infinite; }
+  .ill-stack .c1 b { font: 700 20px var(--display); }
+  .ill-stack .dots { position: absolute; bottom: 4px; display: flex; gap: 4px; }
+  .ill-stack .dots i { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,.3); } .ill-stack .dots i.on { background: #fff; }
+  @keyframes stk { 0%, 70%, 100% { transform: none; } 80% { transform: translateY(-8px) rotate(-4deg); } }
+  /* zonas */
+  .ill-zones { align-content: center; gap: 8px; }
+  .ill-zones .bar { display: flex; align-items: center; gap: 5px; padding: 7px; border-radius: 12px; background: rgba(14,14,18,.85); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); }
+  .ill-zones .bar i { width: 22px; height: 22px; border-radius: 6px; background: rgba(255,255,255,.25); }
+  .ill-zones .z { width: 34px; height: 22px; border-radius: 6px; background: var(--purple); box-shadow: 0 0 14px rgba(191,90,242,.6); animation: blink 3s infinite; }
+  .ill-zones .z2 { animation-delay: 1s; } .ill-zones .z3 { animation-delay: 2s; }
+  @keyframes blink { 0%, 30% { opacity: 1; } 40%, 100% { opacity: .3; } }
+  .ill-zones .lbl { display: flex; justify-content: center; gap: 28px; font-size: 11.5px; color: var(--ink3); padding: 0 4px; }
+  /* atalhos */
+  .ill-keys { grid-auto-flow: column; gap: 8px; }
+  .ill-keys span { min-width: 52px; height: 52px; padding: 0 12px; border-radius: 12px; display: grid; place-items: center; font: 600 16px var(--text);
+    background: linear-gradient(180deg, #2c2c34, #1d1d23); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 4px 0 #0b0b0f, 0 8px 16px rgba(0,0,0,.4); animation: key 2.4s infinite; }
+  .ill-keys span:nth-child(2) { animation-delay: .15s; } .ill-keys .k { animation-delay: .3s; color: var(--yellow); }
+  @keyframes key { 0%, 60%, 100% { transform: none; } 70% { transform: translateY(3px); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 1px 0 #0b0b0f, 0 4px 8px rgba(0,0,0,.4); } }
+  /* prévias */
+  .ill-prev { grid-auto-flow: column; gap: 10px; align-items: end; padding-bottom: 34px; }
+  .ill-prev .win { width: 120px; height: 78px; border-radius: 10px; background: rgba(30,30,38,.95); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 10px 24px rgba(0,0,0,.4); padding: 6px; position: relative; }
+  .ill-prev .win i { display: block; height: 8px; width: 40%; border-radius: 4px; background: rgba(255,255,255,.3); }
+  .ill-prev .win span { position: absolute; inset: 20px 6px 6px; border-radius: 6px; background: linear-gradient(160deg, #0A84FF, #5E3BEE); opacity: .8; }
+  .ill-prev .w2 span { background: linear-gradient(160deg, #30D158, #0f7a68); } .ill-prev .w3 span { background: linear-gradient(160deg, #FF9F0A, #FF453A); }
+  .ill-prev .win:hover, .ill-prev .w2 { transform: translateY(-6px); box-shadow: inset 0 0 0 2px rgba(255,255,255,.5), 0 14px 30px rgba(0,0,0,.45); }
+  .ill-prev .app { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(160deg, #7cc7ff, #0A84FF); }
+  /* ordem */
+  .ill-order { grid-auto-flow: column; gap: 8px; padding: 10px; border-radius: 16px; background: rgba(14,14,18,.85); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); justify-self: center; align-self: center; }
+  .ill-order i { width: 38px; height: 38px; border-radius: 10px; }
+  .ill-order .drag { animation: drag 3.6s ease-in-out infinite; box-shadow: 0 10px 20px rgba(0,0,0,.45); }
+  @keyframes drag { 0%, 15% { transform: none; } 35%, 60% { transform: translate(92px, -18px) scale(1.12); } 80%, 100% { transform: none; } }
+  /* soltar */
+  .ill-drop .file { position: absolute; top: 4px; width: 34px; height: 42px; border-radius: 6px; background: linear-gradient(180deg, #fff 0 60%, #e9e9ee 60%); box-shadow: 0 8px 18px rgba(0,0,0,.4); animation: drop 3s ease-in infinite; }
+  @keyframes drop { 0% { transform: translateY(-10px); opacity: 0; } 20% { opacity: 1; } 60% { transform: translateY(56px) scale(.7); opacity: 1; } 75%, 100% { transform: translateY(60px) scale(.5); opacity: 0; } }
+  .ill-drop .bar { margin-top: 70px; display: flex; gap: 6px; padding: 7px; border-radius: 12px; background: rgba(14,14,18,.85); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); }
+  .ill-drop .bar i { width: 26px; height: 26px; border-radius: 7px; background: rgba(255,255,255,.25); }
+  .ill-drop .bar .slot { background: transparent; box-shadow: inset 0 0 0 2px var(--green); animation: blink 3s infinite; }
+  /* bandeja */
+  .ill-tray { grid-template-columns: repeat(3, 1fr); gap: 10px; place-items: stretch; align-content: center; }
+  .ill-tray .tr { display: grid; gap: 8px; justify-items: center; padding: 14px 8px; border-radius: 14px; background: rgba(255,255,255,.04); box-shadow: inset 0 0 0 1px var(--line); }
+  .ill-tray b { font-size: 12px; color: var(--ink2); font-weight: 500; }
+  .ill-tray span { display: flex; gap: 5px; padding: 7px; border-radius: 10px; background: rgba(14,14,18,.85); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); }
+  .ill-tray span.g { display: grid; grid-template-columns: repeat(2, 1fr); }
+  .ill-tray i { width: 12px; height: 12px; border-radius: 4px; background: #5AB8FF; }
+  .ill-tray i:nth-child(2) { background: #30D158; } .ill-tray i:nth-child(3) { background: #FF9F0A; } .ill-tray i:nth-child(4) { background: #BF5AF2; }
+  .ill-tray i.more { background: none; width: 12px; height: 12px; border-left: 2px solid #fff; border-top: 2px solid #fff; transform: rotate(45deg) translate(3px, 3px) scale(.6); border-radius: 1px; }
+  /* monitores */
+  .ill-mon { grid-auto-flow: column; gap: 10px; align-items: end; }
+  .ill-mon .m { position: relative; width: 104px; height: 66px; border-radius: 8px; background: linear-gradient(160deg, #3b66b3, #8a74c9); box-shadow: inset 0 0 0 2px #2a2a33; }
+  .ill-mon .m2 { width: 84px; height: 54px; }
+  .ill-mon .m::after { content: ""; position: absolute; left: 50%; bottom: -10px; width: 24px; height: 8px; transform: translateX(-50%); border-radius: 0 0 4px 4px; background: #2a2a33; }
+  .ill-mon i { position: absolute; left: 22%; right: 22%; bottom: 5px; height: 7px; border-radius: 4px; background: rgba(14,14,18,.85); animation: mon 4s infinite; }
+  .ill-mon .m2 i { animation-delay: 2s; }
+  @keyframes mon { 0%, 45% { opacity: 1; } 50%, 100% { opacity: .2; } }
+  /* some */
+  .ill-hide .scr2 { position: relative; width: min(280px, 100%); height: 110px; border-radius: 14px; overflow: hidden; background: linear-gradient(160deg, #1b1530, #ff7a3d); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); }
+  .ill-hide .vid { position: absolute; inset: 0; display: grid; place-items: center; } .ill-hide .vid svg { width: 34px; opacity: .85; }
+  .ill-hide .bar { position: absolute; left: 22%; right: 22%; bottom: 8px; height: 16px; border-radius: 7px; background: rgba(14,14,18,.85); box-shadow: inset 0 0 0 1px rgba(255,255,255,.25); animation: hide 4s ease-in-out infinite; }
+  @keyframes hide { 0%, 25% { transform: none; } 40%, 80% { transform: translateY(32px); } 95%, 100% { transform: none; } }
+  /* tema */
+  .ill-theme { grid-auto-flow: column; gap: 14px; }
+  .ill-theme .bar { display: flex; gap: 6px; padding: 8px; border-radius: 14px; }
+  .ill-theme .bar i { width: 30px; height: 30px; border-radius: 8px; }
+  .ill-theme .d { background: rgba(14,14,18,.9); box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); } .ill-theme .d i { background: rgba(255,255,255,.25); }
+  .ill-theme .l { background: rgba(244,244,248,.9); box-shadow: inset 0 0 0 1px rgba(255,255,255,.6); } .ill-theme .l i { background: rgba(0,0,0,.18); }
+  .ill-theme .bar i:first-child { background: linear-gradient(160deg, #7cc7ff, #0A84FF); }
   @media (max-width: 1000px) { .bento { grid-template-columns: repeat(2, 1fr); } }
-  @media (max-width: 560px) { .bento { grid-template-columns: 1fr; } .bx.wide { grid-column: auto; } .bx.tall { grid-row: auto; } }
+  @media (max-width: 600px) { .bento { grid-template-columns: 1fr; grid-auto-rows: auto; } .bx.wide { grid-column: auto; } .bx.tall { grid-row: auto; } .ill { min-height: 110px; } .ill-ws .dsk, .ill-prev .win { height: 70px; } .ill-prev .win { width: 30vw; } }
+  @media (prefers-reduced-motion: reduce) { .ill *, .ill *::before, .ill *::after { animation: none !important; } }
 
   /* ---------- leve */
   .light { display: grid; grid-template-columns: 1.1fr 1fr; gap: clamp(30px, 6vw, 80px); align-items: center; }
@@ -215,10 +338,6 @@
     <div class="ref-pill rv"><span class="av" data-ref-initial></span><span><b data-ref-first></b> te indicou o GlassDock</span></div>
   </div>
 
-  <div class="desk rv" id="desk">
-    <div class="dock-slot"><div id="heroDock"></div></div>
-  </div>
-
   <div class="wrap facts rv">
     <span><b>~2 MB</b> de app nativo</span>
     <span><b>0%</b> de CPU parado</span>
@@ -250,58 +369,91 @@
 
     <div class="studio rv">
       <div class="stage" id="stage" data-pos="bottom">
-        <div class="hint-chip"><svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M5 3l14 8-6 1.5L10 19z"/></svg>Passe o mouse e clique nos ícones</div>
         <div class="dock-slot"><div id="studioDock"></div></div>
       </div>
       <div class="card controls" id="controls">
         <div class="ctl"><span>Tema</span><div class="seg" data-k="theme"><button data-v="dark" class="on">Escuro</button><button data-v="light">Claro</button></div></div>
         <div class="ctl"><span>Vidro</span><div class="seg" data-k="glass"><button data-v="blur" class="on">Desfoque</button><button data-v="acrylic">Acrílico</button><button data-v="clear">Transparente</button></div></div>
         <div class="ctl"><span>Ampliação dos ícones</span><div class="seg" data-k="mag"><button data-v="mac" class="on">Estilo Mac</button><button data-v="scale">Só escala</button><button data-v="none">Nenhuma</button></div></div>
-        <div class="ctl"><span>Animação ao abrir (clique num app)</span><div class="seg" data-k="anim"><button data-v="bounce" class="on">Pulo</button><button data-v="pulse">Pulso</button><button data-v="shake">Tremor</button></div></div>
-        <div class="ctl"><span>Indicador de aberto</span><div class="seg" data-k="ind"><button data-v="dot" class="on">Ponto</button><button data-v="bar">Traço</button></div></div>
+        <div class="ctl"><span>Indicador de aberto</span><div class="seg" data-k="ind"><button data-v="dot">Ponto</button><button data-v="bar" class="on">Traço</button></div></div>
         <div class="ctl"><span>Posição</span><div class="seg" data-k="pos"><button data-v="bottom" class="on">Embaixo</button><button data-v="top">Em cima</button></div></div>
-        <div class="ctl"><span>Placa nos ícones redondos</span><div class="sw" data-k="plate">
-          <button class="none on" data-v="" aria-label="Sem placa"></button>
-          <button data-v="rgba(255,255,255,.92)" style="background:#fff" aria-label="Branca"></button>
+        <div class="ctl"><span>Placa nos ícones</span><div class="sw" data-k="plate">
+          <button class="none" data-v="" aria-label="Sem placa"></button>
+          <button class="on" data-v="#f5f5f7" style="background:#f5f5f7" aria-label="Branca"></button>
           <button data-v="#2a2a31" style="background:#2a2a31" aria-label="Grafite"></button>
           <button data-v="linear-gradient(135deg,#5AB8FF,#5E3BEE)" style="background:linear-gradient(135deg,#5AB8FF,#5E3BEE)" aria-label="Azul"></button>
           <button data-v="linear-gradient(135deg,#ffb3c4,#ff6b8b)" style="background:linear-gradient(135deg,#ffb3c4,#ff6b8b)" aria-label="Rosa"></button>
         </div></div>
-        <div class="ctl"><span>Tamanho dos ícones</span><input type="range" min="36" max="68" value="56" id="size" aria-label="Tamanho dos ícones"></div>
-        <div class="ctl"><span>Papel de parede</span><div class="sw" data-k="wall">
-          <button class="on" data-v="0" style="background:linear-gradient(180deg,#3b66b3,#e59bb3)" aria-label="Pôr do sol"></button>
-          <button data-v="1" style="background:linear-gradient(180deg,#0f3a4a,#2fae8f)" aria-label="Mar"></button>
-          <button data-v="2" style="background:linear-gradient(180deg,#e9e4f5,#b8c6ef)" aria-label="Claro"></button>
-          <button data-v="3" style="background:linear-gradient(180deg,#1b1530,#ff7a3d)" aria-label="Noite"></button>
-        </div></div>
+        <div class="ctl"><span>Tamanho dos ícones</span><input type="range" min="40" max="68" value="56" id="size" aria-label="Tamanho dos ícones"></div>
+        <p class="ctl-note">Os widgets da dock abrem no clique, e a música toca de verdade</p>
       </div>
     </div>
 
     <div class="bento">
-      <div class="bx glow2 rv"><div class="n">4</div><div><h3>posições</h3><p>Embaixo, em cima, à esquerda ou à direita da tela</p></div></div>
-      <div class="bx wide glow rv">
-        <div class="ws-demo">
-          <div class="on"><i style="background:#0A84FF"></i><i style="background:#30D158"></i><i style="background:#FF6B8B"></i></div>
-          <div><i style="background:#FFD60A"></i><i style="background:#BF5AF2"></i></div>
-          <div><i style="background:#40C8E0"></i><i style="background:#FF9F0A"></i><i style="background:#fff"></i><i style="background:#FF453A"></i></div>
-        </div>
-        <div><h3>9 workspaces, cada um com seus apps, widgets e janelas</h3><p>Trabalho, jogos, estudo. Troque com <span class="kbd">Ctrl</span> <span class="kbd">Alt</span> <span class="kbd">1…9</span> ou girando a roda do mouse na dock, e as janelas dos outros saem da frente</p></div>
+      <div class="bx rv" style="--g:#5AB8FF">
+        <div class="ill ill-pos"><div class="scr"><i class="e b"></i><i class="e t"></i><i class="e l"></i><i class="e r"></i></div></div>
+        <div><h3>4 posições</h3><p>Embaixo, em cima, à esquerda ou à direita da tela</p></div>
       </div>
-      <div class="bx rv"><div class="n"><span data-count="42">42</span></div><div><h3>estilos de widget</h3><p>Muitos widgets vêm em mais de um formato e tamanho</p></div></div>
+      <div class="bx wide rv" style="--g:#5E3BEE">
+        <div class="ill ill-ws">
+          <div class="dsk"><span class="w" style="left:10%;top:16%;width:46%;height:46%;background:#0A84FF"></span><span class="w" style="left:44%;top:34%;width:44%;height:42%;background:#30D158"></span><b>Trabalho</b></div>
+          <div class="dsk"><span class="w" style="left:16%;top:20%;width:66%;height:56%;background:#FF453A"></span><b>Jogos</b></div>
+          <div class="dsk"><span class="w" style="left:8%;top:22%;width:40%;height:50%;background:#FFD60A"></span><span class="w" style="left:52%;top:14%;width:38%;height:40%;background:#BF5AF2"></span><b>Estudo</b></div>
+        </div>
+        <div><h3>9 workspaces, cada um com seus apps, widgets e janelas</h3><p>Troque com <span class="kbd">Ctrl</span> <span class="kbd">Alt</span> <span class="kbd">1…9</span> ou girando a roda do mouse na dock, e as janelas dos outros saem da frente</p></div>
+      </div>
+      <div class="bx rv" style="--g:#30D158">
+        <div class="ill ill-styles"><span class="st1"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="4"/><circle cx="20" cy="20" r="15" fill="none" stroke="#30D158" stroke-width="4" stroke-linecap="round" stroke-dasharray="94" stroke-dashoffset="20" transform="rotate(-90 20 20)"/></svg></span><span class="st2"><b>82%</b></span><span class="st3"><i></i><i></i></span></div>
+        <div><h3><span data-count="42">42</span> estilos de widget</h3><p>Muitos widgets vêm em mais de um formato e tamanho</p></div>
+      </div>
 
-      <div class="bx tall rv">
+      <div class="bx tall rv" style="--g:#FF9F0A">
+        <div class="ill ill-pet"><div class="mini"><i style="background:linear-gradient(160deg,#7cc7ff,#0A84FF)"></i><i style="background:linear-gradient(160deg,#5ee07a,#1fb84a)"></i><i style="background:linear-gradient(160deg,#ff7a93,#ff2d55)"></i><i style="background:linear-gradient(160deg,#ffb340,#ff6a00)"></i><i style="background:linear-gradient(160deg,#a56bff,#5E3BEE)"></i><div class="d-pet" id="bentoPet"></div></div></div>
         <div><h3>9 mascotes que andam em cima da dock</h3><p>Sentam, andam, correm ou dormem conforme o processador trabalha. Dá até para pôr comida</p></div>
         <div class="pets"><span>Gato</span><span>Cachorro</span><span>Passarinho</span><span>Dragão</span><span>Dino</span><span>Guerreira</span><span>Guerreiro</span><span>Papai Noel</span><span>Fantasminha</span></div>
       </div>
-      <div class="bx rv"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="11" rx="3"/><path d="M7 6h10M9.5 3h5"/></svg></span><div><h3>Pilhas</h3><p>Vários widgets no mesmo lugar, trocando com a roda do mouse</p></div></div>
-      <div class="bx rv"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="8" rx="3"/><path d="M9 8v8M15 8v8"/></svg></span><div><h3>3 zonas para widgets</h3><p>Junto dos apps, depois dos abertos ou depois da bandeja</p></div></div>
-      <div class="bx rv"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2.5"/><path d="M9 20h6M12 16v4"/></svg></span><div><h3>Prévias ao vivo</h3><p>Pare o mouse num app e veja as janelas dele, com botão de fechar</p></div></div>
-      <div class="bx rv"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16M7 4l-3 3M7 4l3 3M17 20V4M17 20l-3-3M17 20l3-3"/></svg></span><div><h3>Ordem livre</h3><p>Arraste qualquer app, aberto ou fechado, para onde quiser. A ordem fica salva</p></div></div>
-      <div class="bx rv"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg></span><div><h3>Atalhos para tudo</h3><p><span class="kbd">Ctrl</span> <span class="kbd">Alt</span> <span class="kbd">D</span> leva o foco para a dock e as setas fazem o resto</p></div></div>
-      <div class="bx rv"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg></span><div><h3>Arraste e solte</h3><p>Um atalho vira app fixado, uma pasta vira pilha e soltar na Lixeira apaga</p></div></div>
-      <div class="bx wide rv"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5a10 10 0 0 1 14 0M8 15.5a5.5 5.5 0 0 1 8 0"/><circle cx="12" cy="18.5" r="1"/></svg></span><div><h3>Bandeja em linha, em grade ou compacta</h3><p>Rede, volume e bateria com um clique para as Configurações rápidas. Os ícones dos seus apps de bandeja continuam lá, com clique e menu funcionando</p></div></div>
-      <div class="bx rv"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="11" height="8" rx="1.5"/><rect x="13" y="8" width="9" height="7" rx="1.5"/><path d="M6 17h4M16 19h3"/></svg></span><div><h3>Vários monitores</h3><p>A dock segue o ponteiro ou fica uma em cada tela</p></div></div>
-      <div class="bx rv"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18M10.6 6.1A10 10 0 0 1 12 6c5 0 9 6 9 6a17 17 0 0 1-2.7 3.3M6.6 6.6C4.3 8.1 3 12 3 12s4 6 9 6a9 9 0 0 0 4.3-1.1"/></svg></span><div><h3>Some quando precisa</h3><p>Oculta sozinha e se esconde em jogos e vídeos em tela cheia</p></div></div>
+      <div class="bx rv" style="--g:#40C8E0">
+        <div class="ill ill-stack"><span class="c3"></span><span class="c2"></span><span class="c1"><b>26°</b></span><span class="dots"><i class="on"></i><i></i><i></i></span></div>
+        <div><h3>Pilhas</h3><p>Vários widgets no mesmo lugar, trocando com a roda do mouse</p></div>
+      </div>
+      <div class="bx rv" style="--g:#BF5AF2">
+        <div class="ill ill-zones"><div class="bar"><span class="z z1"></span><i></i><i></i><span class="z z2"></span><i></i><span class="z z3"></span></div><div class="lbl"><span>apps</span><span>abertos</span><span>bandeja</span></div></div>
+        <div><h3>3 zonas para widgets</h3><p>Junto dos apps, depois dos abertos ou depois da bandeja</p></div>
+      </div>
+      <div class="bx rv" style="--g:#FFD60A">
+        <div class="ill ill-keys"><span>Ctrl</span><span>Alt</span><span class="k">D</span></div>
+        <div><h3>Atalhos para tudo</h3><p>Ctrl Alt D leva o foco para a dock e as setas fazem o resto</p></div>
+      </div>
+      <div class="bx wide rv" style="--g:#0A84FF">
+        <div class="ill ill-prev"><div class="win"><i></i><span></span></div><div class="win w2"><i></i><span></span></div><div class="win w3"><i></i><span></span></div><div class="app"></div></div>
+        <div><h3>Prévias ao vivo</h3><p>Pare o mouse num app e veja as janelas dele, com botão de fechar. Clique do meio também fecha</p></div>
+      </div>
+      <div class="bx rv" style="--g:#FF6B8B">
+        <div class="ill ill-order"><i style="background:#FF453A"></i><i class="drag" style="background:#0A84FF"></i><i style="background:#30D158"></i><i style="background:#FFD60A"></i></div>
+        <div><h3>Ordem livre</h3><p>Arraste qualquer app, aberto ou fechado, para onde quiser. A ordem fica salva</p></div>
+      </div>
+
+      <div class="bx rv" style="--g:#30D158">
+        <div class="ill ill-drop"><span class="file"></span><div class="bar"><i></i><i></i><i class="slot"></i><i></i></div></div>
+        <div><h3>Arraste e solte</h3><p>Um atalho vira app fixado, uma pasta vira pilha e soltar na Lixeira apaga</p></div>
+      </div>
+      <div class="bx wide rv" style="--g:#5AB8FF">
+        <div class="ill ill-tray"><div class="tr"><b>Em linha</b><span><i></i><i></i><i></i><i></i><i></i></span></div><div class="tr"><b>Em grade</b><span class="g"><i></i><i></i><i></i><i></i></span></div><div class="tr"><b>Compacta</b><span><i></i><i class="more"></i></span></div></div>
+        <div><h3>Bandeja em linha, em grade ou compacta</h3><p>Rede, volume e bateria com um clique para as Configurações rápidas. Os ícones dos seus apps continuam lá, com clique e menu</p></div>
+      </div>
+      <div class="bx rv" style="--g:#5E3BEE">
+        <div class="ill ill-mon"><div class="m"><i></i></div><div class="m m2"><i></i></div></div>
+        <div><h3>Vários monitores</h3><p>A dock segue o ponteiro ou fica uma em cada tela</p></div>
+      </div>
+
+      <div class="bx wide rv" style="--g:#FF9F0A">
+        <div class="ill ill-hide"><div class="scr2"><span class="vid"><svg viewBox="0 0 24 24" fill="#fff"><path d="M8 5.5v13l10.5-6.5z"/></svg></span><div class="bar"></div></div></div>
+        <div><h3>Some quando precisa</h3><p>Oculta sozinha e se esconde em jogos e vídeos em tela cheia. Encostou o mouse na borda, ela volta</p></div>
+      </div>
+      <div class="bx wide rv" style="--g:#8E8E93">
+        <div class="ill ill-theme"><div class="bar d"><i></i><i></i><i></i></div><div class="bar l"><i></i><i></i><i></i></div></div>
+        <div><h3>Escuro, claro ou seguindo o Windows</h3><p>Três tipos de vidro: desfoque, acrílico ou transparente, com a cor de placa que você quiser</p></div>
+      </div>
     </div>
   </div>
 </section>
@@ -414,8 +566,6 @@
 <script src="/hero.js"></script>
 <script>
 (function () {
-  const desk = document.getElementById('desk');
-
   /* ---------- vitrine dos 26 widgets */
   const pad = n => String(n).padStart(2, '0');
   const ring = (pct, col, label, sub) => `<div class="tile" style="--u:1"><div class="c"><svg viewBox="0 0 40 40" style="width:80%;height:80%"><circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="3.4"/><circle cx="20" cy="20" r="16" fill="none" stroke="${col}" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="100.5" stroke-dashoffset="${100.5 * (1 - pct)}" transform="rotate(-90 20 20)"/><text x="20" y="${sub ? 21.5 : 23.4}" text-anchor="middle" fill="#fff" font-size="${sub ? 8.6 : 9.6}" font-weight="600" font-family="Segoe UI, Inter, sans-serif">${label}</text>${sub ? `<text x="20" y="28.6" text-anchor="middle" fill="#fff" fill-opacity=".6" font-size="5.2" font-family="Segoe UI, Inter, sans-serif">${sub}</text>` : ''}</svg></div></div>`;
@@ -451,9 +601,49 @@
     ['Uso do OpenCode', 'Custo e tokens por provedor', `<div class="tile" style="--u:2"><div class="row" style="height:100%;justify-content:space-between"><div style="line-height:1.2"><div class="t-sm">Hoje</div><div style="font:600 calc(var(--s)*.26)/1 var(--display);white-space:nowrap">US$ 3,20</div></div><div style="text-align:right;line-height:1.2"><div class="t-sm">Tokens</div><div style="font:600 calc(var(--s)*.24)/1 var(--display)">1,2 M</div></div></div></div>`],
     ['Clima', 'Agora, condições e previsão de 5 dias, sem cadastro', `<div class="tile blue" style="--u:2"><div class="row" style="height:100%"><svg viewBox="0 0 40 30" style="width:calc(var(--s)*.6);flex:none"><circle cx="15" cy="12" r="7" fill="#FFD60A"/><path d="M14 26a7 7 0 0 1 1-14 9 9 0 0 1 17 3 5.5 5.5 0 0 1-.5 11z" fill="#fff"/></svg><div style="line-height:1.15"><div style="font:600 calc(var(--s)*.36)/1 var(--display)">24°</div><div class="t-sm" style="opacity:.85">Poucas nuvens</div></div></div></div>`],
   ];
+  const WDS = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
   const grid = document.getElementById('wgrid');
-  const WIDE = ['Tocando agora', 'Calendário'];
-  grid.innerHTML = W.map(([n, d, t], i) => `<article class="wcard rv${WIDE.includes(n) ? ' wide' : ''}"><div class="wprev"><div>${t}</div></div><h3>${n}</h3><p>${d}</p></article>`).join('');
+  // tamanho de cada card no bento (b = 2x2, t = 1x2, w = 2x1, o resto 1x1) e a cor do brilho
+  const SIZE = { 'Tocando agora': 'b', 'Calendário': 'b', 'Clima': 'b', 'Mascote': 't', 'Lista de tarefas': 't',
+    'Relógio mundial': 'w', 'Atividade': 'w', 'Favoritos': 'w', 'Progresso do tempo': 'w', 'Rede': 'w', 'Uso do Codex': 'w', 'Uso do OpenCode': 'w' };
+  const ORDER = ['Tocando agora', 'Relógio', 'Analógico', 'Relógio mundial', 'Mascote', 'Pomodoro', 'Timer de foco', 'Contagem regressiva', 'Atividade', 'Bateria',
+    'Calendário', 'Lista de tarefas', 'Post-it', 'Beber água', 'Favoritos', 'Progresso do tempo', 'Rede', 'Clima', 'Coleção de apps', 'Arquivos',
+    'Uso do Codex', 'Uso do Claude', 'Conta-gotas', 'Uso do OpenCode', 'Capturas de tela', 'Layout do teclado'];
+  const COLOR = { 'Tocando agora': '#FF2D55', 'Relógio': '#5AB8FF', 'Analógico': '#5AB8FF', 'Relógio mundial': '#5AB8FF', 'Mascote': '#FF9F0A', 'Pomodoro': '#FF453A',
+    'Timer de foco': '#0A84FF', 'Contagem regressiva': '#BF5AF2', 'Atividade': '#30D158', 'Bateria': '#30D158', 'Calendário': '#FF453A', 'Lista de tarefas': '#FFD60A',
+    'Post-it': '#FFD60A', 'Beber água': '#40C8E0', 'Favoritos': '#5E3BEE', 'Progresso do tempo': '#5E3BEE', 'Rede': '#30D158', 'Clima': '#40C8E0',
+    'Coleção de apps': '#40C8E0', 'Arquivos': '#0A84FF', 'Uso do Codex': '#BF5AF2', 'Uso do Claude': '#FF9F0A', 'Conta-gotas': '#5E3BEE',
+    'Uso do OpenCode': '#BF5AF2', 'Capturas de tela': '#FF6B8B', 'Layout do teclado': '#8E8E93' };
+  const TAG = { 'Tocando agora': 'Qualquer player', 'Calendário': '6 estilos', 'Clima': '3 estilos', 'Mascote': '9 bichinhos', 'Bateria': '3 estilos', 'Atividade': '3 estilos', 'Rede': '2 estilos', 'Relógio mundial': '14 cidades' };
+  const SV = {
+    play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l10.5-6.5z"/></svg>',
+    prev: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2.4v14H6zM19 5v14L9 12z"/></svg>',
+    next: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.6 5H18v14h-2.4zM5 5v14l10-7z"/></svg>',
+    sun: '<svg viewBox="0 0 40 40"><g stroke="#FFD60A" stroke-width="2.6" stroke-linecap="round"><path d="M20 3v4M20 33v4M3 20h4M33 20h4M8 8l2.8 2.8M29.2 29.2L32 32M8 32l2.8-2.8M29.2 10.8L32 8"/></g><circle cx="20" cy="20" r="8" fill="#FFD60A"/></svg>',
+    cloudsun: '<svg viewBox="0 0 40 30"><circle cx="15" cy="12" r="7" fill="#FFD60A"/><path d="M14 26a7 7 0 0 1 1-14 9 9 0 0 1 17 3 5.5 5.5 0 0 1-.5 11z" fill="#fff"/></svg>',
+    cloud: '<svg viewBox="0 0 40 30"><path d="M11 26a8 8 0 0 1 1-16 10 10 0 0 1 19 3 6.5 6.5 0 0 1-.5 13z" fill="#dfe6f0"/></svg>',
+    rain: '<svg viewBox="0 0 40 34"><path d="M11 22a8 8 0 0 1 1-16 10 10 0 0 1 19 3 6.5 6.5 0 0 1-.5 13z" fill="#cfd8e6"/><path d="M14 26l-2 5M21 26l-2 5M28 26l-2 5" stroke="#5AB8FF" stroke-width="2.4" stroke-linecap="round"/></svg>',
+  };
+  const nowD = new Date(), hm2 = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}`, plus = (m) => { const d = new Date(Date.now() + m * 60000); d.setMinutes(Math.round(d.getMinutes() / 5) * 5); return d; };
+  const RICH = {
+    'Tocando agora': `<div class="wr wr-music"><div class="wr-cover"><img src="https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg" alt=""><span class="hx-eq"><i></i><i></i><i></i></span></div>
+      <div><div class="wr-song"><b>Never Gonna Give You Up</b><span>Rick Astley</span></div><div class="wr-bar"><i></i></div><div class="wr-times"><span>1:21</span><span>3:33</span></div>
+      <div class="wr-ctrl">${SV.prev}<span class="main">${SV.play}</span>${SV.next}</div></div></div>`,
+    'Calendário': `<div class="wr"><div class="tile hx-tile" style="--u:3;--s:66px;--gap:8px;margin:0 auto 6px"><div class="hx-cal-in"><div class="hx-day"><small>${WDS[nowD.getDay()]}</small><b>${nowD.getDate()}</b></div><i class="hx-bar"></i><div class="hx-next"><b>em 19 min</b><small>Daily do time · às ${hm2(plus(19))}</small></div></div></div>
+      <div class="wr-ev"><i style="background:#FF453A"></i><div><b>Daily do time</b><small>${hm2(plus(19))} · Meet</small></div><span class="when">em 19 min</span></div>
+      <div class="wr-ev"><i style="background:#BF5AF2"></i><div><b>Revisão do design</b><small>${hm2(plus(200))} · Figma</small></div></div>
+      <div class="wr-ev"><i style="background:#30D158"></i><div><b>Entrega do projeto</b><small>amanhã, 10:00 · Teams</small></div></div></div>`,
+    'Clima': `<div class="wr"><div class="hp-wnow"><div><small>São Paulo</small><b>26°</b><span>Ensolarado · máx 29° mín 18°</span></div><span class="hp-wicon">${SV.sun}</span></div>
+      <div class="hp-fc">${[['Hoje', 'sun', 29, 18], ['Sex', 'cloudsun', 27, 17], ['Sáb', 'rain', 22, 16], ['Dom', 'cloud', 24, 15], ['Seg', 'sun', 28, 17]].map(([d, i, mx, mn]) => `<div><small style="color:var(--ink2)">${d}</small><span>${SV[i]}</span><b>${mx}°</b><small style="color:var(--ink3)">${mn}°</small></div>`).join('')}</div></div>`,
+    'Mascote': `<div class="wr" style="align-content:space-between"><div class="wr-mini"><i style="background:linear-gradient(160deg,#7cc7ff,#0A84FF)"></i><i style="background:linear-gradient(160deg,#5ee07a,#1fb84a)"></i><i style="background:linear-gradient(160deg,#ff7a93,#ff2d55)"></i><i style="background:linear-gradient(160deg,#ffb340,#ff6a00)"></i><i style="background:linear-gradient(160deg,#a56bff,#5E3BEE)"></i><div class="d-pet">${GD.CAT}</div></div>
+      <div class="wr-pets">${['Gato', 'Cachorro', 'Passarinho', 'Dragão', 'Dino', 'Guerreira', 'Guerreiro', 'Papai Noel', 'Fantasminha'].map(x => `<span>${x}</span>`).join('')}</div></div>`,
+    'Lista de tarefas': `<div class="wr" style="gap:8px">${[['Enviar proposta', 1], ['Pagar o boleto', 1], ['Academia às 18h', 0], ['Comprar café', 0], ['Ligar para a Ana', 0]].map(([t, d]) => `<div class="wr-task${d ? ' done' : ''}"><i></i>${t}</div>`).join('')}</div>`,
+  };
+  const byName = Object.fromEntries(W.map((w) => [w[0], w]));
+  grid.innerHTML = ORDER.map((n) => {
+    const [, d, t] = byName[n], sz = SIZE[n] || 's';
+    return `<article class="wb wb-${sz} rv" style="--g:${COLOR[n] || '#5AB8FF'}">${TAG[n] ? `<span class="wb-tag">${TAG[n]}</span>` : ''}<div class="wb-prev">${RICH[n] || `<div>${t}</div>`}</div><div class="wb-txt"><h3>${n}</h3><p>${d}</p></div></article>`;
+  }).join('');
   // tiles que já existem no componente da dock
   const tmp = document.createElement('div');
   grid.querySelectorAll('[data-tile]').forEach(el => {
@@ -465,7 +655,6 @@
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -5% 0px' });
   grid.querySelectorAll('.rv').forEach(el => io.observe(el));
 
-  const WDS = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
   function live() {
     const n = new Date();
     document.querySelectorAll('[data-live="time"]').forEach(e => e.textContent = `${pad(n.getHours())}:${pad(n.getMinutes())}`);
@@ -479,38 +668,12 @@
   }
   live(); setInterval(live, 1000);
 
-  /* ---------- estúdio de personalização */
-  const studio = GD.build(document.getElementById('studioDock'), {
-    pet: true,
-    items: [
-      { t: 'ws' },
-      { t: 'app', icon: 'start', name: 'Iniciar' },
-      { t: 'app', icon: 'orb', name: 'Navegador', round: true, open: true },
-      { t: 'app', icon: 'files', name: 'Arquivos', open: true },
-      { t: 'app', icon: 'bubble', name: 'Mensagens', round: true },
-      { t: 'app', icon: 'notes', name: 'Notas', opt: true },
-      { t: 'app', icon: 'design', name: 'Design', open: true, opt: true },
-      { t: 'app', icon: 'terminal', name: 'Terminal', opt: true },
-      { t: 'sep' },
-      { t: 'w', w: 'date' },
-      { t: 'w', w: 'pomodoro', opt: true },
-      { t: 'sep', opt: true },
-      { t: 'status', opt: true },
-      { t: 'clock' },
-    ],
-  });
-  const stage = document.getElementById('stage');
-  const walls = [
-    getComputedStyle(desk).getPropertyValue('--wall'),
-    'radial-gradient(100% 80% at 80% 0%, #2fae8f 0%, transparent 60%), radial-gradient(90% 80% at 0% 100%, #1d6f9e 0%, transparent 60%), linear-gradient(180deg, #0f3a4a, #1c6b6a)',
-    'radial-gradient(100% 80% at 20% 0%, #fff 0%, transparent 60%), radial-gradient(90% 80% at 100% 100%, #b8c6ef 0%, transparent 60%), linear-gradient(180deg, #ece7f7, #c8d2f2)',
-    'radial-gradient(90% 70% at 50% 110%, #ff7a3d 0%, transparent 60%), radial-gradient(70% 60% at 85% 20%, #5E3BEE 0%, transparent 60%), linear-gradient(180deg, #120e24, #2a1a3a)',
-  ];
-  stage.style.background = walls[0];
-  let size = 56;
-  const fitStudio = GD.fit(studio, stage, () => size, 22);
-  document.getElementById('size').addEventListener('input', e => { size = +e.target.value; fitStudio(); });
+  document.getElementById('bentoPet').innerHTML = GD.CAT;
 
+  /* ---------- estúdio de personalização (a dock vem do hero.js) */
+  const stage = document.getElementById('stage');
+  const studio = window.GDStudio.dock;
+  document.getElementById('size').addEventListener('input', e => window.GDStudio.setSize(+e.target.value));
   document.querySelectorAll('#controls [data-k]').forEach(group => {
     group.addEventListener('click', e => {
       const b = e.target.closest('button');
@@ -518,13 +681,9 @@
       group.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
       const k = group.dataset.k, v = b.dataset.v;
       if (k === 'pos') stage.dataset.pos = v;
-      else if (k === 'wall') stage.style.background = walls[+v];
       else if (k === 'plate') { studio.dataset.plate = v ? '1' : ''; studio.style.setProperty('--plate-c', v); }
       else studio.dataset[k] = v;
-      if (k === 'anim') {
-        const a = studio.querySelectorAll('.d-app')[2];
-        a.classList.remove('bounce', 'pulse', 'shake'); void a.offsetWidth; a.classList.add(v);
-      }
+      requestAnimationFrame(() => window.GDStudio.replace());
     });
   });
 })();

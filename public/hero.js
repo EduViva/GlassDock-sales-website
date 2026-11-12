@@ -1,8 +1,8 @@
 // Dock do topo: igual à dock real (relógio, agenda, música, apps, Downloads, bandeja e clima),
 // com os painéis que abrem no clique e a música tocando de verdade pelo player do YouTube
 (function () {
-  const desk = document.getElementById('desk');
-  const host = document.getElementById('heroDock');
+  const desk = document.getElementById('stage');
+  const host = document.getElementById('studioDock');
   if (!desk || !host) return;
 
   const pad = (n) => String(n).padStart(2, '0');
@@ -54,9 +54,9 @@
     { t: 'raw', cls: 'hx-clock', panel: 'clock', html: `<div class="tile hx-tile" style="--u:2"><div class="hx-clock-in"><b data-hx="time"></b><small data-hx="date"></small></div></div>` },
     { t: 'raw', cls: 'hx-cal', panel: 'calendar', opt: true, html: `<div class="tile hx-tile" style="--u:3"><div class="hx-cal-in"><div class="hx-day"><small data-hx="wd"></small><b data-hx="day"></b></div><i class="hx-bar"></i><div class="hx-next"><b data-hx="rel"></b><small data-hx="ev"></small></div></div></div>` },
     { t: 'raw', cls: 'hx-music', panel: 'music', html: `<div class="tile hx-tile" style="--u:3"><div class="hx-music-in"><div class="hx-cover"><img src="${COVER}" alt=""><span class="hx-eq"><i></i><i></i><i></i></span></div><div class="hx-song"><b>Never Gonna Give You Up</b><small>Rick Astley</small></div><button class="hx-play" type="button" aria-label="Tocar">${ICON.play}</button></div></div>` },
-    { t: 'app', icon: 'chrome', name: 'Google Chrome', open: true, cls: 'plate' },
-    { t: 'app', icon: 'figma', name: 'Figma', opt: true },
-    { t: 'app', icon: 'teams', name: 'Microsoft Teams', open: true, opt: true },
+    { t: 'app', icon: 'chrome', name: 'Google Chrome', open: true, round: true },
+    { t: 'app', icon: 'figma', name: 'Figma', round: true, opt: true },
+    { t: 'app', icon: 'teams', name: 'Microsoft Teams', open: true, round: true, opt: true },
     { t: 'raw', cls: 'hx-dl', panel: 'downloads', opt: true, html: `<div class="tile hx-tile hx-sq"><span class="hx-folder">${ICON.folder}</span><span class="hx-badge">3</span></div>` },
     { t: 'sep' },
     { t: 'raw', cls: 'hx-tray', panel: 'tray', opt: true, html: `<div class="hx-tray-in"><span class="hx-chev">${ICON.chevron}</span><span class="hx-fth">${ICON.feather}</span></div>` },
@@ -65,8 +65,11 @@
   ];
   const dock = GD.build(host, { items });
   dock.classList.add('hero-dock');
-  dock.dataset.ind = 'bar';
-  GD.fit(dock, desk, 58, 22);
+  Object.assign(dock.dataset, { ind: 'bar', glass: 'blur', theme: 'dark', mag: 'mac', plate: '1' });
+  dock.style.setProperty('--plate-c', '#f5f5f7');
+  let size = 56;
+  const refit = GD.fit(dock, desk, () => size, 22);
+  window.GDStudio = { dock, setSize(v) { size = v; refit(); if (open) place(open); }, replace: () => open && place(open) };
 
   /* ------------------------------------------------------------ atualiza os tiles */
   function tick() {
@@ -107,8 +110,17 @@
     let left = r.left - d.left + r.width / 2 - w / 2;
     left = Math.max(12, Math.min(left, d.width - w - 12));
     el.style.left = left + 'px';
-    el.style.bottom = d.bottom - k.top + 12 + 'px';
-    el.style.maxHeight = k.top - d.top - 24 + 'px';
+    if (desk.dataset.pos === 'top') {
+      el.style.bottom = 'auto';
+      el.style.top = k.bottom - d.top + 14 + 'px';
+      el.style.maxHeight = d.bottom - k.bottom - 26 + 'px';
+      el.classList.add('below');
+    } else {
+      el.style.top = 'auto';
+      el.style.bottom = d.bottom - k.top + 12 + 'px';
+      el.style.maxHeight = k.top - d.top - 24 + 'px';
+      el.classList.remove('below');
+    }
     el.style.setProperty('--ax', `${r.left - d.left + r.width / 2 - left}px`);
   }
 
@@ -140,14 +152,14 @@
 
   const hint = document.createElement('div');
   hint.className = 'hx-hint';
-  hint.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="#fff"><path d="M5 3l14 8-6 1.5L10 19z"/></svg>Clique nos widgets da dock';
+  hint.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="#fff"><path d="M5 3l14 8-6 1.5L10 19z"/></svg>Abra os widgets: clique na agenda, na música, no clima…';
   desk.appendChild(hint);
 
   /* relógio */
   const CITIES = [['Lisboa', 'Europe/Lisbon'], ['Nova York', 'America/New_York'], ['Tóquio', 'Asia/Tokyo']];
   panel('clock', `<div class="hp-clock"><b data-c="t"></b><span data-c="d"></span></div>
     <div class="hp-list" data-c="w"></div>
-    <div class="hp-row hp-toggle"><div><b>Alarme</b><small>07:30 · dias úteis</small></div><button type="button" class="sw on" aria-label="Alarme"></button></div>`, 280);
+    <div class="hp-row hp-toggle"><div><b>Alarme</b><small>07:30 · dias úteis</small></div><button type="button" class="tgl on" aria-label="Alarme"></button></div>`, 280);
   function renderClock() {
     const p = panels.clock, n = new Date();
     p.querySelector('[data-c="t"]').textContent = `${hm(n)}:${pad(n.getSeconds())}`;
@@ -158,7 +170,7 @@
       return `<div class="hp-row"><div><b>${c}</b><small>${off === 0 ? 'mesmo horário' : (off > 0 ? '+' : '') + off + ' h'}</small></div><span class="hp-big">${t}</span></div>`;
     }).join('');
   }
-  panels.clock.querySelector('.sw').addEventListener('click', (e) => e.currentTarget.classList.toggle('on'));
+  panels.clock.querySelector('.tgl').addEventListener('click', (e) => e.currentTarget.classList.toggle('on'));
 
   /* calendário */
   let calMonth = new Date(now0.getFullYear(), now0.getMonth(), 1);
@@ -290,7 +302,13 @@
   tick();
   setInterval(tick, 1000);
 
-  // no computador, a agenda já começa aberta para mostrar como funciona
-  const start = () => { if (innerWidth >= 900 && !open) { show('calendar'); hint.classList.remove('gone'); } };
-  if (document.fonts) document.fonts.ready.then(() => setTimeout(start, 300)); else setTimeout(start, 600);
+  // a agenda abre sozinha quando a seção aparece, para mostrar que dá para clicar
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((es) => {
+      if (!es[0].isIntersecting) return;
+      io.disconnect();
+      setTimeout(() => { if (!open) { show(innerWidth >= 900 ? 'calendar' : 'music'); hint.classList.remove('gone'); } }, 500);
+    }, { threshold: .6 });
+    io.observe(desk);
+  }
 })();
